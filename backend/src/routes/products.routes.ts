@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../middlewares/auth.middleware';
 import * as productsService from '../services/products.service';
+import * as pricesService from '../services/prices.service';
 
 const router = Router();
 
@@ -99,6 +100,23 @@ router.delete('/:id', authenticate, async (req, res) => {
     const deleted = await productsService.deleteProduct(id.data);
     if (!deleted) return res.status(404).json({ error: 'Produto não encontrado' });
     return res.status(204).send();
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Preços atuais de um produto em cada supermercado, do mais barato ao mais caro (público)
+router.get('/:id/prices', async (req, res) => {
+  const id = idSchema.safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: 'ID inválido' });
+
+  try {
+    const product = await productsService.getProduct(id.data);
+    if (!product) return res.status(404).json({ error: 'Produto não encontrado' });
+
+    const prices = await pricesService.listLatestByProduct(id.data);
+    return res.json(prices);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro interno do servidor' });

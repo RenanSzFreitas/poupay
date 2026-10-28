@@ -5,6 +5,7 @@ import { pool } from './db';
 import authRouter from './routes/auth.routes';
 import marketsRouter from './routes/markets.routes';
 import productsRouter from './routes/products.routes';
+import pricesRouter from './routes/prices.routes';
 
 const app = express();
 app.use(cors());
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use('/auth', authRouter);
 app.use('/markets', marketsRouter);
 app.use('/products', productsRouter);
+app.use('/prices', pricesRouter);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });

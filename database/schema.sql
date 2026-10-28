@@ -28,3 +28,18 @@ CREATE TABLE IF NOT EXISTS products (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS market_prices (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  market_id BIGINT NOT NULL REFERENCES markets(id) ON DELETE CASCADE,
+  product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  price NUMERIC(10, 2) NOT NULL CHECK (price > 0),
+  is_promotion BOOLEAN NOT NULL DEFAULT FALSE,
+  is_available BOOLEAN NOT NULL DEFAULT TRUE,
+  source VARCHAR(20) NOT NULL DEFAULT 'manual'
+    CHECK (source IN ('manual', 'test', 'user', 'integration')),
+  recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_prices_lookup
+  ON market_prices (market_id, product_id, recorded_at DESC);
