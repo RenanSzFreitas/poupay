@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middlewares/auth.middleware';
 import * as listsService from '../services/shopping-lists.service';
+import { compareList } from '../services/comparison.service';
 
 const router = Router();
 
@@ -165,6 +166,38 @@ router.delete('/:id/items/:itemId', async (req: AuthRequest, res) => {
     const deleted = await listsService.deleteItem(userIdOf(req), id.data, itemId.data);
     if (!deleted) return res.status(404).json({ error: 'Item não encontrado' });
     return res.status(204).send();
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+const compareSchema = z.object({
+  market_ids: z.array(z.number().int().positive()).min(1).max(50).optional(),
+});
+
+// Comparar o custo da lista entre supermercados
+router.post('/:id/compare', async (req: AuthRequest, res) => {
+  const id = idSchema.safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: 'ID inválido' });
+
+  const parsed = compareSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: 'Dados inválidos' });
+
+  try {
+    const result = await compareList(userIdOf(req), id.data, parsed.data.market_ids);
+
+    if (result.kind === 'not_found') {
+      return res.status(404).json({ error: 'Lista não encontrada' });
+    }
+    if (result.kind === 'empty') {
+      return res.status(400).json({ error: 'A lista não tem itens' });
+    }
+    if (result.kind === 'no_markets') {
+      return res.status(404).json({ error: 'Nenhum supermercado encontrado' });
+    }
+
+    return res.json(result.data);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro interno do servidor' });
