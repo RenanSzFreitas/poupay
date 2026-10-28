@@ -43,3 +43,22 @@ CREATE TABLE IF NOT EXISTS market_prices (
 
 CREATE INDEX IF NOT EXISTS idx_market_prices_lookup
   ON market_prices (market_id, product_id, recorded_at DESC);
+
+CREATE TABLE IF NOT EXISTS shopping_lists (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS shopping_list_items (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  list_id BIGINT NOT NULL REFERENCES shopping_lists(id) ON DELETE CASCADE,
+  product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  is_purchased BOOLEAN NOT NULL DEFAULT FALSE,
+  UNIQUE (list_id, product_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_shopping_lists_user ON shopping_lists (user_id);
