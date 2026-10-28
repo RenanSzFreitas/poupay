@@ -2,7 +2,7 @@ import { pool } from '../db';
 
 const STALE_DAYS = 30;
 
-type Row = {
+export type Row = {
   market_id: number;
   market_name: string;
   product_id: number;
@@ -24,44 +24,13 @@ function money(cents: number) {
   return (cents / 100).toFixed(2);
 }
 
-export async function compareList(userId: number, listId: number, marketIds?: number[]) {
-  const listResult = await pool.query(
-    'SELECT id, name FROM shopping_lists WHERE id = $1 AND user_id = $2',
-    [listId, userId]
-  );
-  const list = listResult.rows[0];
-  if (!list) return { kind: 'not_found' as const };
-
-  const countResult = await pool.query(
-    'SELECT COUNT(*)::int AS n FROM shopping_list_items WHERE list_id = $1',
-    [listId]
-  );
-  if (countResult.rows[0].n === 0) return { kind: 'empty' as const };
-
-  // Para cada item da lista x cada supermercado, pega o preço mais recente (se existir)
-  const result = await pool.query(
-    `SELECT m.id AS market_id, m.name AS market_name,
-            i.product_id, p.name AS product_name, i.quantity,
-            lp.price, lp.is_available, lp.is_promotion, lp.recorded_at
-     FROM shopping_list_items i
-     JOIN products p ON p.id = i.product_id
-     CROSS JOIN markets m
-     LEFT JOIN LATERAL (
-       SELECT mp.price, mp.is_available, mp.is_promotion, mp.recorded_at
-       FROM market_prices mp
-       WHERE mp.market_id = m.id AND mp.product_id = i.product_id
-       ORDER BY mp.recorded_at DESC, mp.id DESC
-       LIMIT 1
-     ) lp ON TRUE
-     WHERE i.list_id = $1
-       AND ($2::bigint[] IS NULL OR m.id = ANY($2::bigint[]))
-     ORDER BY m.id, p.name`,
-    [listId, marketIds ?? null]
-  );
-  const rows = result.rows as Row[];
-  if (rows.length === 0) return { kind: 'no_markets' as const };
-
-  const staleLimit = Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000;
+// Função pura: recebe os dados e devolve a comparação, sem tocar no banco
+export function buildComparison(
+  list: { id: number; name: string },
+  rows: Row[],
+  now: Date = new Date()
+) {
+  const staleLimit = now.getTime() - STALE_DAYS * 24 * 60 * 60 * 1000;
 
   const markets = new Map<number, {
     market_id: number;
@@ -177,7 +146,7 @@ export async function compareList(userId: number, listId: number, marketIds?: nu
     });
   }
 
-  const data = {
+  return {
     list: { id: list.id, name: list.name },
     compared_markets: markets.size,
     single_market: singleMarket.map(({ totalCents, ...rest }) => rest),
@@ -191,6 +160,43 @@ export async function compareList(userId: number, listId: number, marketIds?: nu
       potential_extra_savings: best ? money(best.totalCents - splitCents) : null,
     },
   };
+}
 
-  return { kind: 'ok' as const, data };
+export async function compareList(userId: number, listId: number, marketIds?: number[]) {
+  const listResult = await pool.query(
+    'SELECT id, name FROM shopping_lists WHERE id = $1 AND user_id = $2',
+    [listId, userId]
+  );
+  const list = listResult.rows[0];
+  if (!list) return { kind: 'not_found' as const };
+
+  const countResult = await pool.query(
+    'SELECT COUNT(*)::int AS n FROM shopping_list_items WHERE list_id = $1',
+    [listId]
+  );
+  if (countResult.rows[0].n === 0) return { kind: 'empty' as const };
+
+  const result = await pool.query(
+    `SELECT m.id AS market_id, m.name AS market_name,
+            i.product_id, p.name AS product_name, i.quantity,
+            lp.price, lp.is_available, lp.is_promotion, lp.recorded_at
+     FROM shopping_list_items i
+     JOIN products p ON p.id = i.product_id
+     CROSS JOIN markets m
+     LEFT JOIN LATERAL (
+       SELECT mp.price, mp.is_available, mp.is_promotion, mp.recorded_at
+       FROM market_prices mp
+       WHERE mp.market_id = m.id AND mp.product_id = i.product_id
+       ORDER BY mp.recorded_at DESC, mp.id DESC
+       LIMIT 1
+     ) lp ON TRUE
+     WHERE i.list_id = $1
+       AND ($2::bigint[] IS NULL OR m.id = ANY($2::bigint[]))
+     ORDER BY m.id, p.name`,
+    [listId, marketIds ?? null]
+  );
+  const rows = result.rows as Row[];
+  if (rows.length === 0) return { kind: 'no_markets' as const };
+
+  return { kind: 'ok' as const, data: buildComparison(list, rows) };
 }
