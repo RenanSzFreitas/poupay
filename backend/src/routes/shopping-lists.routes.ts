@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middlewares/auth.middleware';
 import * as listsService from '../services/shopping-lists.service';
 import { compareList } from '../services/comparison.service';
+import { getMarketIdsOf } from '../services/market-preferences.service';
 
 const router = Router();
 
@@ -174,6 +175,7 @@ router.delete('/:id/items/:itemId', async (req: AuthRequest, res) => {
 
 const compareSchema = z.object({
   market_ids: z.array(z.number().int().positive()).min(1).max(50).optional(),
+  use: z.enum(['selected', 'favorites']).optional(),
 });
 
 // Comparar o custo da lista entre supermercados
@@ -185,7 +187,19 @@ router.post('/:id/compare', async (req: AuthRequest, res) => {
   if (!parsed.success) return res.status(400).json({ error: 'Dados inválidos' });
 
   try {
-    const result = await compareList(userIdOf(req), id.data, parsed.data.market_ids);
+    let marketIds = parsed.data.market_ids;
+
+    if (!marketIds && parsed.data.use) {
+      marketIds = await getMarketIdsOf(
+        parsed.data.use === 'favorites' ? 'favorite' : 'selected',
+        userIdOf(req)
+      );
+      if (marketIds.length === 0) {
+        return res.status(400).json({ error: 'Nenhum supermercado na seleção escolhida' });
+      }
+    }
+
+    const result = await compareList(userIdOf(req), id.data, marketIds);
 
     if (result.kind === 'not_found') {
       return res.status(404).json({ error: 'Lista não encontrada' });

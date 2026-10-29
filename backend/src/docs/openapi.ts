@@ -36,6 +36,7 @@ export const openapi = {
     { name: 'Produtos' },
     { name: 'Preços' },
     { name: 'Listas de compras' },
+    { name: 'Preferências' },
   ],
   components: {
     securitySchemes: {
@@ -179,6 +180,13 @@ export const openapi = {
             type: 'array',
             items: { type: 'integer' },
             description: 'Supermercados a comparar. Se omitido, compara todos.',
+          },
+          use: {
+            type: 'string',
+            enum: ['selected', 'favorites'],
+            description:
+              'Usa a seleção ou os favoritos do usuário no lugar de market_ids. ' +
+              'Se market_ids for enviado, ele tem prioridade.',
           },
         },
       },
@@ -356,6 +364,35 @@ export const openapi = {
         security: auth, parameters: [pathId],
         requestBody: { required: false, content: { 'application/json': { schema: ref('CompareInput') } } },
         responses: { 200: json('Comparação', ref('CompareResult')), 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound') },
+      },
+    },
+    '/users/me/favorite-markets': {
+      get: {
+        tags: ['Preferências'], summary: 'Listar supermercados favoritos', security: auth,
+        responses: { 200: json('Favoritos', { type: 'array', items: ref('Market') }), 401: err('Unauthorized') },
+      },
+      post: {
+        tags: ['Preferências'], summary: 'Adicionar supermercado aos favoritos', security: auth,
+        requestBody: body({ type: 'object', required: ['market_id'], properties: { market_id: { type: 'integer' } } }),
+        responses: { 201: { description: 'Adicionado' }, 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound'), 409: err('Conflict') },
+      },
+    },
+    '/users/me/favorite-markets/{marketId}': {
+      delete: {
+        tags: ['Preferências'], summary: 'Remover supermercado dos favoritos', security: auth,
+        parameters: [{ name: 'marketId', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } }],
+        responses: { 204: noContent, 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound') },
+      },
+    },
+    '/users/me/selected-markets': {
+      get: {
+        tags: ['Preferências'], summary: 'Consultar supermercados selecionados para comparação', security: auth,
+        responses: { 200: json('Selecionados', { type: 'array', items: ref('Market') }), 401: err('Unauthorized') },
+      },
+      put: {
+        tags: ['Preferências'], summary: 'Substituir a seleção de supermercados', security: auth,
+        requestBody: body({ type: 'object', required: ['market_ids'], properties: { market_ids: { type: 'array', items: { type: 'integer' } } } }),
+        responses: { 200: json('Nova seleção', { type: 'array', items: ref('Market') }), 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound') },
       },
     },
   },
