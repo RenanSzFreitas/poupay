@@ -62,3 +62,17 @@ CREATE TABLE IF NOT EXISTS shopping_list_items (
 );
 
 CREATE INDEX IF NOT EXISTS idx_shopping_lists_user ON shopping_lists (user_id);
+
+CREATE TABLE IF NOT EXISTS user_favorite_markets (
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  market_id BIGINT NOT NULL REFERENCES markets(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, market_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_selected_markets (
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  market_id BIGINT NOT NULL REFERENCES markets(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, market_id)
+);
