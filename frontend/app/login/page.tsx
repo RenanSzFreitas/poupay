@@ -1,0 +1,80 @@
+'use client';
+
+import { useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth';
+import { ApiError } from '@/lib/api';
+
+export default function LoginPage() {
+  const { login } = useAuth();
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+
+    try {
+      await login(email, password);
+      router.push('/');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro inesperado');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const input = 'w-full rounded border border-gray-300 bg-white px-3 py-2 text-black';
+
+  return (
+    <main className="flex min-h-screen items-center justify-center p-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+        <h1 className="text-2xl font-bold">Entrar</h1>
+
+        <div>
+          <label className="mb-1 block text-sm">E-mail</label>
+          <input
+            className={input}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm">Senha</label>
+          <input
+            className={input}
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full rounded bg-green-600 px-3 py-2 text-white disabled:opacity-50"
+        >
+          {submitting ? 'Entrando...' : 'Entrar'}
+        </button>
+
+        <p className="text-sm">
+          Ainda não tem conta?{' '}
+          <Link href="/cadastro" className="text-green-500 underline">
+            Criar conta
+          </Link>
+        </p>
+      </form>
+    </main>
+  );
+}

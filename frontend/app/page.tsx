@@ -1,23 +1,34 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth';
 
 export default function Home() {
-  const [status, setStatus] = useState('verificando...');
-
-  useEffect(() => {
-    fetch(`${API_URL}/health`)
-      .then((r) => r.json())
-      .then((d) => setStatus(d.status === 'ok' ? 'API conectada' : 'resposta inesperada'))
-      .catch(() => setStatus('API fora do ar'));
-  }, []);
+  const { user, loading, logout } = useAuth();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-2">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4">
       <h1 className="text-3xl font-bold">Poupay</h1>
-      <p className="text-gray-600">{status}</p>
+
+      {loading ? (
+        <p>Carregando...</p>
+      ) : user ? (
+        <>
+          <p>Olá, {user.name}!</p>
+          <button onClick={logout} className="rounded border px-4 py-2">
+            Sair
+          </button>
+        </>
+      ) : (
+        <div className="flex gap-3">
+          <Link href="/login" className="rounded bg-green-600 px-4 py-2 text-white">
+            Entrar
+          </Link>
+          <Link href="/cadastro" className="rounded border px-4 py-2">
+            Criar conta
+          </Link>
+        </div>
+      )}
     </main>
   );
 }
