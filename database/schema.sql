@@ -76,3 +76,27 @@ CREATE TABLE IF NOT EXISTS user_selected_markets (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (user_id, market_id)
 );
+
+CREATE TABLE IF NOT EXISTS purchases (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  market_id BIGINT NOT NULL REFERENCES markets(id) ON DELETE RESTRICT,
+  list_id BIGINT REFERENCES shopping_lists(id) ON DELETE SET NULL,
+  purchased_at DATE NOT NULL DEFAULT CURRENT_DATE,
+  total_paid NUMERIC(12, 2) NOT NULL CHECK (total_paid >= 0),
+  reference_highest_total NUMERIC(12, 2),
+  reference_lowest_total NUMERIC(12, 2),
+  reference_market_count INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS purchase_items (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  purchase_id BIGINT NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+  product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  unit_price NUMERIC(10, 2) NOT NULL CHECK (unit_price >= 0),
+  UNIQUE (purchase_id, product_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_purchases_user_date ON purchases (user_id, purchased_at DESC);

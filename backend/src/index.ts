@@ -10,6 +10,7 @@ import shoppingListsRouter from './routes/shopping-lists.routes';
 import swaggerUi from 'swagger-ui-express';
 import { openapi } from './docs/openapi';
 import usersRouter from './routes/users.routes';
+import purchasesRouter from './routes/purchases.routes';
 
 const app = express();
 app.use(cors());
@@ -20,6 +21,7 @@ app.use('/products', productsRouter);
 app.use('/prices', pricesRouter);
 app.use('/shopping-lists', shoppingListsRouter);
 app.use('/users/me', usersRouter);
+app.use('/purchases', purchasesRouter);
 app.get('/docs.json', (_req, res) => {
   res.json(openapi);
 });

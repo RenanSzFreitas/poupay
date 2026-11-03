@@ -200,3 +200,32 @@ export async function compareList(userId: number, listId: number, marketIds?: nu
 
   return { kind: 'ok' as const, data: buildComparison(list, rows) };
 }
+
+// Compara uma cesta avulsa (itens + quantidades), sem depender de uma lista salva
+export async function compareBasket(
+  items: { product_id: number; quantity: number }[],
+  marketIds?: number[]
+) {
+  const result = await pool.query(
+    `SELECT m.id AS market_id, m.name AS market_name,
+            b.product_id, p.name AS product_name, b.quantity,
+            lp.price, lp.is_available, lp.is_promotion, lp.recorded_at
+     FROM unnest($1::bigint[], $2::int[]) AS b(product_id, quantity)
+     JOIN products p ON p.id = b.product_id
+     CROSS JOIN markets m
+     LEFT JOIN LATERAL (
+       SELECT mp.price, mp.is_available, mp.is_promotion, mp.recorded_at
+       FROM market_prices mp
+       WHERE mp.market_id = m.id AND mp.product_id = b.product_id
+       ORDER BY mp.recorded_at DESC, mp.id DESC
+       LIMIT 1
+     ) lp ON TRUE
+     WHERE ($3::bigint[] IS NULL OR m.id = ANY($3::bigint[]))
+     ORDER BY m.id, p.name`,
+    [items.map((i) => i.product_id), items.map((i) => i.quantity), marketIds ?? null]
+  );
+
+  const rows = result.rows as Row[];
+  if (rows.length === 0) return null;
+  return buildComparison({ id: 0, name: 'compra' }, rows);
+}

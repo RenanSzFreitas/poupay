@@ -93,7 +93,10 @@ router.delete('/:id', authenticate, async (req, res) => {
     const deleted = await marketsService.deleteMarket(id.data);
     if (!deleted) return res.status(404).json({ error: 'Supermercado não encontrado' });
     return res.status(204).send();
-  } catch (err) {
+  } catch (err: any) {
+    if (err.code === '23503') {
+      return res.status(409).json({ error: 'Não é possível excluir: há compras registradas com este item' });
+    }
     console.error(err);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }

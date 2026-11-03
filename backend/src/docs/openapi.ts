@@ -395,5 +395,55 @@ export const openapi = {
         responses: { 200: json('Nova seleção', { type: 'array', items: ref('Market') }), 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound') },
       },
     },
+    '/purchases': {
+      post: {
+        tags: ['Compras'], summary: 'Registrar compra realizada', security: auth,
+        description:
+          'O total pago é calculado a partir dos preços pagos por item. ' +
+          'As economias só são calculadas se pelo menos 2 mercados tiverem a cesta completa com preço.',
+        requestBody: body({
+          type: 'object',
+          required: ['market_id', 'items'],
+          properties: {
+            market_id: { type: 'integer', description: 'Onde a compra foi feita' },
+            list_id: { type: 'integer' },
+            purchased_at: { type: 'string', format: 'date', description: 'AAAA-MM-DD. Padrão: hoje' },
+            compare_market_ids: { type: 'array', items: { type: 'integer' }, description: 'Mercados usados como referência. Padrão: todos' },
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                required: ['product_id', 'quantity', 'unit_price'],
+                properties: {
+                  product_id: { type: 'integer' },
+                  quantity: { type: 'integer', minimum: 1 },
+                  unit_price: { type: 'number', description: 'Preço pago por unidade' },
+                },
+              },
+            },
+          },
+        }),
+        responses: { 201: json('Compra registrada', { type: 'object' }), 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound') },
+      },
+    },
+    '/purchases/history': {
+      get: {
+        tags: ['Compras'], summary: 'Histórico de compras do usuário', security: auth,
+        parameters: [query('from', 'Data inicial (AAAA-MM-DD)'), query('to', 'Data final (AAAA-MM-DD)')],
+        responses: { 200: json('Compras', { type: 'array', items: { type: 'object' } }), 400: err('BadRequest'), 401: err('Unauthorized') },
+      },
+    },
+    '/purchases/summary': {
+      get: {
+        tags: ['Compras'], summary: 'Gastos e economia por mês', security: auth,
+        responses: { 200: json('Resumo mensal', { type: 'array', items: { type: 'object' } }), 401: err('Unauthorized') },
+      },
+    },
+    '/purchases/{id}': {
+      get: {
+        tags: ['Compras'], summary: 'Consultar uma compra com os itens', security: auth, parameters: [pathId],
+        responses: { 200: json('Compra', { type: 'object' }), 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound') },
+      },
+    },
   },
 };
