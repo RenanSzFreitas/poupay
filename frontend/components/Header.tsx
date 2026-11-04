@@ -19,6 +19,9 @@ export default function Header() {
           <Link href="/produtos" className="text-sm hover:underline">
             Produtos
           </Link>
+          <Link href="/listas" className="text-sm hover:underline">
+            Listas
+          </Link>
         </div>
 
         <div className="flex items-center gap-3 text-sm">
