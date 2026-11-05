@@ -22,6 +22,9 @@ export default function Header() {
           <Link href="/listas" className="text-sm hover:underline">
             Listas
           </Link>
+          <Link href="/historico" className="text-sm hover:underline">
+            Histórico
+          </Link>
         </div>
 
         <div className="flex items-center gap-3 text-sm">
