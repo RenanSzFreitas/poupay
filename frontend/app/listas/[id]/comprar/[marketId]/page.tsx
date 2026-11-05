@@ -34,6 +34,7 @@ type Done = {
   total_paid: string;
   realized_savings: string | null;
   potential_savings: string | null;
+  savings_locked?: boolean;
 };
 
 const brl = (value: string | number) =>
@@ -215,6 +216,14 @@ function ComprarConteudo() {
               </p>
             </div>
           </div>
+        ) : done.savings_locked ? (
+          <p className="mb-6 rounded border border-green-600 p-4 text-sm">
+            O cálculo de economia é um recurso do Poupay Premium. Sua compra foi registrada
+            normalmente.{' '}
+            <Link href="/assinatura" className="text-green-500 underline">
+              Conhecer o Premium
+            </Link>
+          </p>
         ) : (
           <p className="mb-6 rounded border border-yellow-600 p-4 text-sm">
             Não foi possível calcular a economia: menos de 2 supermercados tinham todos os itens com

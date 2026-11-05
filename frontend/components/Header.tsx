@@ -25,6 +25,9 @@ export default function Header() {
           <Link href="/historico" className="text-sm hover:underline">
             Histórico
           </Link>
+          <Link href="/assinatura" className="text-sm hover:underline">
+            Premium
+          </Link>
         </div>
 
         <div className="flex items-center gap-3 text-sm">

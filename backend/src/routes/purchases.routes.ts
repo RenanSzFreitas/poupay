@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middlewares/auth.middleware';
+import { getPlan } from '../services/plan.service';
 import * as purchasesService from '../services/purchases.service';
 
 const router = Router();
@@ -44,11 +45,16 @@ router.post('/', async (req: AuthRequest, res) => {
   }
 
   try {
-    const result = await purchasesService.createPurchase(userIdOf(req), parsed.data);
+    const plan = await getPlan(userIdOf(req));
+    const result = await purchasesService.createPurchase(
+      userIdOf(req),
+      parsed.data,
+      plan.isPremium
+    );
     if (result.kind === 'list_not_found') {
       return res.status(404).json({ error: 'Lista não encontrada' });
     }
-    return res.status(201).json(result.purchase);
+    return res.status(201).json({ ...result.purchase, savings_locked: !plan.isPremium });
   } catch (err: any) {
     if (err.code === '23503') {
       return res.status(404).json({ error: 'Supermercado ou produto não encontrado' });

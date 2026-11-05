@@ -2,9 +2,11 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import PremiumPaywall from '@/components/PremiumPaywall';
 import { useParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
+
 
 type Market = { id: number; name: string; city: string };
 
@@ -64,6 +66,7 @@ function CompararConteudo() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [comparedIds, setComparedIds] = useState<number[]>([]);
+  const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
   function fail(err: unknown) {
     if (err instanceof ApiError && err.status === 401) {
@@ -132,11 +135,29 @@ function CompararConteudo() {
       setResult(data);
       setComparedIds(checked);
     } catch (err) {
-      fail(err);
+      if (err instanceof ApiError && err.status === 402) setIsPremium(false);
+      else fail(err);
     } finally {
       setComparing(false);
     }
   }
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+
+    api<{ is_premium: boolean }>('/plan', { token })
+      .then((p) => {
+        if (!cancelled) setIsPremium(p.is_premium);
+      })
+      .catch((err) => {
+        if (!cancelled) fail(err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   if (authLoading || !user) {
     return <main className="mx-auto max-w-4xl p-4">Carregando...</main>;
@@ -152,6 +173,11 @@ function CompararConteudo() {
       </Link>
       <h1 className="mb-4 mt-2 text-2xl font-bold">Comparar preços</h1>
 
+      {isPremium === null ? (
+        <p>Carregando...</p>
+      ) : !isPremium ? (
+        <PremiumPaywall title="A comparação automática é um recurso Premium" />
+      ) : (
       <section className="mb-6">
         <h2 className="mb-1 font-semibold">Supermercados</h2>
         <p className="mb-3 text-sm text-gray-400">
@@ -211,6 +237,7 @@ function CompararConteudo() {
           {comparing ? 'Comparando...' : 'Comparar'}
         </button>
       </section>
+    )}
 
       {notice && <p className="mb-3 text-sm text-yellow-500">{notice}</p>}
       {error && <p className="mb-3 text-sm text-red-500">{error}</p>}

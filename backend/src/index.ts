@@ -11,6 +11,7 @@ import swaggerUi from 'swagger-ui-express';
 import { openapi } from './docs/openapi';
 import usersRouter from './routes/users.routes';
 import purchasesRouter from './routes/purchases.routes';
+import planRouter from './routes/plan.routes';
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,7 @@ app.use('/prices', pricesRouter);
 app.use('/shopping-lists', shoppingListsRouter);
 app.use('/users/me', usersRouter);
 app.use('/purchases', purchasesRouter);
+app.use('/plan', planRouter);
 app.get('/docs.json', (_req, res) => {
   res.json(openapi);
 });

@@ -38,7 +38,7 @@ const COLUMNS = `p.id, p.market_id, m.name AS market_name, p.list_id,
   p.reference_highest_total, p.reference_lowest_total,
   p.reference_market_count, p.created_at`;
 
-export async function createPurchase(userId: number, input: PurchaseInput) {
+export async function createPurchase(userId: number, input: PurchaseInput, withReference = true) {
   if (input.list_id !== undefined) {
     const own = await pool.query(
       'SELECT 1 FROM shopping_lists WHERE id = $1 AND user_id = $2',
@@ -52,7 +52,9 @@ export async function createPurchase(userId: number, input: PurchaseInput) {
   const totalCents = input.items.reduce((sum, i, idx) => sum + itemCents[idx] * i.quantity, 0);
 
   // Foto da referência: mercados que têm a cesta inteira com preço
-  const comparison = await compareBasket(input.items, input.compare_market_ids);
+  const comparison = withReference
+    ? await compareBasket(input.items, input.compare_market_ids)
+    : null;
   const complete = comparison ? comparison.single_market.filter((m) => m.complete) : [];
   const lowest = complete.length > 0 ? complete[0].total : null;
   const highest = complete.length > 0 ? complete[complete.length - 1].total : null;

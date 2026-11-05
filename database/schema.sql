@@ -100,3 +100,6 @@ CREATE TABLE IF NOT EXISTS purchase_items (
 );
 
 CREATE INDEX IF NOT EXISTS idx_purchases_user_date ON purchases (user_id, purchased_at DESC);
+
+-- Acesso premium: vale enquanto premium_until estiver no futuro
+ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_until TIMESTAMPTZ;

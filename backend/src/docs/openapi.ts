@@ -37,6 +37,7 @@ export const openapi = {
     { name: 'Preços' },
     { name: 'Listas de compras' },
     { name: 'Preferências' },
+    { name: 'Assinatura' },
   ],
   components: {
     securitySchemes: {
@@ -47,6 +48,7 @@ export const openapi = {
       Unauthorized: json('Token ausente, inválido ou expirado (ou credenciais incorretas)', ref('Error')),
       NotFound: json('Recurso não encontrado', ref('Error')),
       Conflict: json('Conflito: o registro já existe', ref('Error')),
+      PaymentRequired: json('Recurso exclusivo para assinantes (code: PREMIUM_REQUIRED)', ref('Error')),
     },
     schemas: {
       Error: { type: 'object', properties: { error: { type: 'string' } } },
@@ -443,6 +445,21 @@ export const openapi = {
       get: {
         tags: ['Compras'], summary: 'Consultar uma compra com os itens', security: auth, parameters: [pathId],
         responses: { 200: json('Compra', { type: 'object' }), 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound') },
+      },
+    },
+    '/plan': {
+      get: {
+        tags: ['Assinatura'], summary: 'Plano do usuário logado', security: auth,
+        responses: {
+          200: json('Plano', {
+            type: 'object',
+            properties: {
+              is_premium: { type: 'boolean' },
+              premium_until: { type: 'string', format: 'date-time', nullable: true },
+            },
+          }),
+          401: err('Unauthorized'),
+        },
       },
     },
   },

@@ -4,6 +4,7 @@ import { authenticate, AuthRequest } from '../middlewares/auth.middleware';
 import * as listsService from '../services/shopping-lists.service';
 import { compareList } from '../services/comparison.service';
 import { getMarketIdsOf } from '../services/market-preferences.service';
+import { requirePremium } from '../middlewares/premium.middleware';
 
 const router = Router();
 
@@ -179,7 +180,7 @@ const compareSchema = z.object({
 });
 
 // Comparar o custo da lista entre supermercados
-router.post('/:id/compare', async (req: AuthRequest, res) => {
+router.post('/:id/compare', requirePremium, async (req: AuthRequest, res) => {
   const id = idSchema.safeParse(req.params.id);
   if (!id.success) return res.status(400).json({ error: 'ID inválido' });
 
