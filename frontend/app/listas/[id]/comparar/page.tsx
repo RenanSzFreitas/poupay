@@ -63,6 +63,7 @@ function CompararConteudo() {
   const [comparing, setComparing] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [comparedIds, setComparedIds] = useState<number[]>([]);
 
   function fail(err: unknown) {
     if (err instanceof ApiError && err.status === 401) {
@@ -129,6 +130,7 @@ function CompararConteudo() {
         body: checked.length > 0 ? { market_ids: checked } : {},
       });
       setResult(data);
+      setComparedIds(checked);
     } catch (err) {
       fail(err);
     } finally {
@@ -297,6 +299,14 @@ function CompararConteudo() {
                       ))}
                     </ul>
                   </details>
+                  <Link
+                    href={`/listas/${id}/comprar/${m.market_id}${
+                      comparedIds.length > 0 ? `?compare=${comparedIds.join(',')}` : ''
+                    }`}
+                    className="mt-3 inline-block rounded border border-green-600 px-3 py-1 text-sm text-green-500 hover:bg-green-900/30"
+                  >
+                    Comprei aqui
+                  </Link>
                 </li>
               ))}
             </ul>
