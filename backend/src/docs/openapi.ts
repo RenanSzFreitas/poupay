@@ -462,5 +462,17 @@ export const openapi = {
         },
       },
     },
+    '/billing/checkout': {
+      post: {
+        tags: ['Assinatura'], summary: 'Iniciar o pagamento da assinatura (devolve a url do checkout)',
+        security: auth,
+        responses: {
+          201: json('Checkout criado', { type: 'object', properties: { url: { type: 'string' } } }),
+          401: err('Unauthorized'),
+          409: err('Conflict'),
+          502: json('Falha ao falar com o provedor de pagamento', ref('Error')),
+        },
+      },
+    },
   },
 };

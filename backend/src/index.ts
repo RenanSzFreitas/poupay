@@ -12,9 +12,12 @@ import { openapi } from './docs/openapi';
 import usersRouter from './routes/users.routes';
 import purchasesRouter from './routes/purchases.routes';
 import planRouter from './routes/plan.routes';
+import billingRouter from './routes/billing.routes';
+import webhooksRouter from './routes/webhooks.routes';
 
 const app = express();
 app.use(cors());
+app.use('/webhooks', webhooksRouter);
 app.use(express.json());
 app.use('/auth', authRouter);
 app.use('/markets', marketsRouter);
@@ -24,6 +27,7 @@ app.use('/shopping-lists', shoppingListsRouter);
 app.use('/users/me', usersRouter);
 app.use('/purchases', purchasesRouter);
 app.use('/plan', planRouter);
+app.use('/billing', billingRouter);
 app.get('/docs.json', (_req, res) => {
   res.json(openapi);
 });

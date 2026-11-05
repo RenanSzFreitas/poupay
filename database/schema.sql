@@ -103,3 +103,24 @@ CREATE INDEX IF NOT EXISTS idx_purchases_user_date ON purchases (user_id, purcha
 
 -- Acesso premium: vale enquanto premium_until estiver no futuro
 ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_until TIMESTAMPTZ;
+
+-- Assinaturas: liga o usuário ao checkout e à assinatura da AbacatePay
+CREATE TABLE IF NOT EXISTS billing_subscriptions (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  checkout_id VARCHAR(100) NOT NULL UNIQUE,
+  subscription_id VARCHAR(100) UNIQUE,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'active', 'cancelled')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_billing_subscriptions_user ON billing_subscriptions (user_id);
+
+-- Eventos já processados (a AbacatePay pode reenviar o mesmo evento)
+CREATE TABLE IF NOT EXISTS billing_events (
+  event_id VARCHAR(100) PRIMARY KEY,
+  event VARCHAR(60) NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
