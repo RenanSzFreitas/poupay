@@ -159,7 +159,17 @@ function ListaConteudo() {
       <Link href="/listas" className="text-sm text-green-500 underline">
         ← Minhas listas
       </Link>
-      <h1 className="mb-4 mt-2 text-2xl font-bold">{list.name}</h1>
+      <div className="mb-4 mt-2 flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">{list.name}</h1>
+        {list.items.length > 0 && (
+          <Link
+            href={`/listas/${list.id}/comparar`}
+            className="rounded bg-green-600 px-4 py-2 text-white"
+          >
+            Comparar preços
+          </Link>
+        )}
+      </div>
 
       {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
 
