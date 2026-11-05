@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PasswordInput from '@/components/PasswordInput';
 import { useAuth } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
 
@@ -49,12 +50,11 @@ export default function LoginPage() {
 
         <div>
           <label className="mb-1 block text-sm">Senha</label>
-          <input
-            className={input}
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
           />
         </div>
 

@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PasswordInput from '@/components/PasswordInput';
 import { useAuth } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
 
@@ -62,14 +63,13 @@ export default function CadastroPage() {
 
         <div>
           <label className="mb-1 block text-sm">Senha (mínimo 8 caracteres)</label>
-          <input
-            className={input}
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
             maxLength={72}
+            autoComplete="new-password"
           />
         </div>
 
