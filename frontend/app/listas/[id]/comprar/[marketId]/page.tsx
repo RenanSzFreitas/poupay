@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
+import { ErrorText, Loading, PageTitle, brl } from '@/components/ui';
 
 type ListItem = {
   product_id: number;
@@ -37,8 +38,6 @@ type Done = {
   savings_locked?: boolean;
 };
 
-const brl = (value: string | number) =>
-  Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 // Aceita "5,90" e "5.90"; campo vazio é inválido (não vira zero)
 function parseNumber(text: string) {
@@ -173,72 +172,67 @@ function ComprarConteudo() {
     }
   }
 
-  if (authLoading || !user || loading) {
-    return <main className="mx-auto max-w-4xl p-4">Carregando...</main>;
-  }
+  if (authLoading || !user || loading) return <Loading />;
 
   if (!marketName) {
     return (
-      <main className="mx-auto max-w-4xl p-4">
-        <p className="mb-3 text-red-500">{error || 'Não foi possível abrir esta tela.'}</p>
-        <Link href={`/listas/${id}`} className="text-green-500 underline">
-          Voltar à lista
-        </Link>
+      <main className="page">
+        <div className="mb-3">
+          <ErrorText>{error || 'Não foi possível abrir esta tela.'}</ErrorText>
+        </div>
+        <Link href={`/listas/${id}`} className="link">Voltar à lista</Link>
       </main>
     );
   }
 
-  // Tela de resultado depois de registrar
+  // Depois de registrar
   if (done) {
+    const hasSavings = done.realized_savings !== null && done.potential_savings !== null;
+
     return (
-      <main className="mx-auto max-w-4xl p-4">
-        <h1 className="mb-2 text-2xl font-bold">Compra registrada!</h1>
-        <p className="mb-4">
-          Você pagou <strong>{brl(done.total_paid)}</strong> em {done.market_name}.
-        </p>
+      <main className="page">
+        <PageTitle title="Registrar compra" subtitle={`Mercado: ${done.market_name}`} />
 
-        {done.realized_savings !== null && done.potential_savings !== null ? (
-          <div className="mb-6 space-y-3 rounded border border-gray-700 p-4">
-            <div>
-              <p className="text-sm text-gray-400">Economia realizada</p>
-              <p className="text-xl font-bold text-green-500">{brl(done.realized_savings)}</p>
-              <p className="text-xs text-gray-400">
-                Em relação ao supermercado mais caro entre os comparados.
-                {Number(done.realized_savings) < 0 &&
-                  ' Valor negativo: você pagou mais que o mais caro.'}
-              </p>
+        <section className="card mx-auto max-w-lg py-10 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-olive text-white">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+          </span>
+          <h2 className="mt-4 text-2xl font-extrabold">Compra registrada!</h2>
+          <p className="mt-1 text-muted">
+            Ela já está no seu histórico. Você pagou <strong className="text-ink">{brl(done.total_paid)}</strong>.
+          </p>
+
+          {hasSavings ? (
+            <div className="mx-auto mt-5 inline-flex flex-wrap items-center justify-center gap-2 rounded-xl bg-sage-soft px-4 py-2">
+              <span className="font-semibold">Economia: {brl(done.realized_savings!)}</span>
+              <span className="badge-gold">Premium</span>
             </div>
-            <div>
-              <p className="text-sm text-gray-400">Economia potencial</p>
-              <p className="text-xl font-bold">{brl(done.potential_savings)}</p>
-              <p className="text-xs text-gray-400">
-                Quanto a mais poderia ter economizado no supermercado mais barato.
-              </p>
-            </div>
+          ) : done.savings_locked ? (
+            <p className="mx-auto mt-5 max-w-sm rounded-xl bg-sage-soft px-4 py-3 text-sm">
+              O cálculo de economia é um recurso Premium.{' '}
+              <Link href="/assinatura" className="link">Conhecer o Premium</Link>
+            </p>
+          ) : (
+            <p className="mx-auto mt-5 max-w-sm rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Não deu para calcular a economia: menos de 2 mercados tinham preço para todos os itens.
+            </p>
+          )}
+
+          {hasSavings && (
+            <p className="mx-auto mt-2 max-w-sm text-xs text-muted">
+              Em relação ao mercado mais caro entre os comparados.
+              {Number(done.potential_savings) > 0 &&
+                ` No mais barato, você teria economizado mais ${brl(done.potential_savings!)}.`}
+            </p>
+          )}
+
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/historico" className="btn-outline px-5 py-2.5">Ver histórico</Link>
+            <Link href={`/listas/${id}`} className="btn-outline px-5 py-2.5">Voltar à lista</Link>
           </div>
-        ) : done.savings_locked ? (
-          <p className="mb-6 rounded border border-green-600 p-4 text-sm">
-            O cálculo de economia é um recurso do Poupay Premium. Sua compra foi registrada
-            normalmente.{' '}
-            <Link href="/assinatura" className="text-green-500 underline">
-              Conhecer o Premium
-            </Link>
-          </p>
-        ) : (
-          <p className="mb-6 rounded border border-yellow-600 p-4 text-sm">
-            Não foi possível calcular a economia: menos de 2 supermercados tinham todos os itens com
-            preço cadastrado. O sistema não estima valores que não conhece.
-          </p>
-        )}
-
-        <div className="flex gap-3">
-          <Link href={`/listas/${id}`} className="rounded border px-4 py-2">
-            Voltar à lista
-          </Link>
-          <Link href="/listas" className="rounded border px-4 py-2">
-            Minhas listas
-          </Link>
-        </div>
+        </section>
       </main>
     );
   }
@@ -247,83 +241,80 @@ function ComprarConteudo() {
     .filter((r) => r.include)
     .reduce((sum, r) => sum + (rowCents(r) ?? 0), 0);
 
-  const input = 'rounded border border-gray-300 bg-white px-2 py-1 text-right text-black';
+  const small = 'rounded-lg border border-line bg-field px-2 py-1 text-right text-ink focus:border-olive focus:outline-none disabled:opacity-40';
 
   return (
-    <main className="mx-auto max-w-4xl p-4">
-      <Link href={`/listas/${id}/comparar`} className="text-sm text-green-500 underline">
+    <main className="page">
+      <Link href={`/listas/${id}/comparar`} className="text-sm font-semibold text-muted hover:text-olive">
         ← Voltar à comparação
       </Link>
-      <h1 className="mb-1 mt-2 text-2xl font-bold">Registrar compra</h1>
-      <p className="mb-4 text-sm text-gray-400">
-        {listName} · {marketName}. Os preços vêm preenchidos com os cadastrados: ajuste para o que
-        você realmente pagou (confira no cupom). Desmarque o que não comprou.
-      </p>
+      <div className="mt-2">
+        <PageTitle title="Registrar compra" subtitle={`Mercado: ${marketName} · ${listName}`} />
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="mb-1 block text-sm">Data da compra</label>
-          <input
-            type="date"
-            value={date}
-            max={today}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            className="rounded border border-gray-300 bg-white px-2 py-1 text-black"
-          />
+      <form onSubmit={handleSubmit} className="card mx-auto max-w-2xl">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <h2 className="text-xl font-bold">Resumo da compra</h2>
+          <label className="text-sm text-muted">
+            Data{' '}
+            <input
+              type="date"
+              value={date}
+              max={today}
+              onChange={(e) => setDate(e.target.value)}
+              required
+              className={`${small} ml-1 text-left`}
+            />
+          </label>
         </div>
+        <p className="mb-4 text-xs text-muted">
+          Os preços vêm do cadastro do mercado. Ajuste para o que você pagou (confira no cupom) e desmarque o
+          que não comprou.
+        </p>
 
         {rows.length === 0 ? (
-          <p>A lista não tem itens.</p>
+          <p className="text-muted">A lista não tem itens.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="divide-y divide-line">
             {rows.map((r, index) => {
               const cents = rowCents(r);
               return (
-                <li
-                  key={r.product_id}
-                  className="flex flex-wrap items-center gap-3 rounded border border-gray-700 p-3"
-                >
+                <li key={r.product_id} className="flex flex-wrap items-center gap-3 py-3">
                   <input
                     type="checkbox"
                     checked={r.include}
                     onChange={(e) => updateRow(index, { include: e.target.checked })}
-                    className="h-4 w-4"
+                    aria-label={`Comprei ${r.name}`}
+                    className="h-4 w-4 accent-olive"
                   />
-
-                  <div className={`min-w-40 flex-1 ${r.include ? '' : 'opacity-40'}`}>
+                  <div className={`min-w-36 flex-1 ${r.include ? '' : 'opacity-40'}`}>
                     <p className="font-semibold">{r.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {r.detail} ·{' '}
-                      {r.listed ? `cadastrado: ${brl(r.listed)}` : 'sem preço cadastrado aqui'}
-                    </p>
+                    <label className="text-xs text-muted">
+                      Quantidade:
+                      <input
+                        type="number"
+                        min={1}
+                        max={1000}
+                        value={r.quantity}
+                        disabled={!r.include}
+                        onChange={(e) => updateRow(index, { quantity: e.target.value })}
+                        className={`${small} ml-1 w-14 py-0.5`}
+                      />
+                    </label>
+                    {!r.listed && <span className="ml-2 text-xs text-amber-700">sem preço cadastrado</span>}
                   </div>
-
-                  <label className="text-xs text-gray-400">
-                    Qtd
-                    <input
-                      type="number"
-                      min={1}
-                      max={1000}
-                      value={r.quantity}
-                      disabled={!r.include}
-                      onChange={(e) => updateRow(index, { quantity: e.target.value })}
-                      className={`${input} ml-1 w-16`}
-                    />
-                  </label>
-
-                  <label className="text-xs text-gray-400">
-                    Preço (R$)
+                  <label className="text-xs text-muted">
+                    R$
                     <input
                       inputMode="decimal"
                       value={r.price}
                       disabled={!r.include}
                       onChange={(e) => updateRow(index, { price: e.target.value })}
-                      className={`${input} ml-1 w-24`}
+                      aria-label={`Preço de ${r.name}`}
+                      className={`${small} ml-1 w-20`}
                     />
                   </label>
-
-                  <span className="w-24 text-right text-sm">
+                  <span className="w-24 text-right font-bold">
                     {r.include && cents !== null ? brl(cents / 100) : '—'}
                   </span>
                 </li>
@@ -332,15 +323,16 @@ function ComprarConteudo() {
           </ul>
         )}
 
-        <p className="mt-4 text-lg font-bold">Total pago: {brl(totalCents / 100)}</p>
+        <div className="mt-2 flex items-center justify-between border-t border-line pt-4">
+          <span className="font-semibold">Total</span>
+          <span className="text-2xl font-extrabold">{brl(totalCents / 100)}</span>
+        </div>
 
-        {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+        <div className="mt-3">
+          <ErrorText>{error}</ErrorText>
+        </div>
 
-        <button
-          type="submit"
-          disabled={submitting || rows.length === 0}
-          className="mt-4 rounded bg-green-600 px-5 py-2 text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting || rows.length === 0} className="btn-primary mt-4 w-full py-3">
           {submitting ? 'Registrando...' : 'Registrar compra'}
         </button>
       </form>
@@ -350,7 +342,7 @@ function ComprarConteudo() {
 
 export default function ComprarPage() {
   return (
-    <Suspense fallback={<main className="mx-auto max-w-4xl p-4">Carregando...</main>}>
+    <Suspense fallback={<Loading />}>
       <ComprarConteudo />
     </Suspense>
   );

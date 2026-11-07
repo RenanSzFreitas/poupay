@@ -60,6 +60,11 @@ export async function deleteList(userId: number, listId: number) {
   return (result.rowCount ?? 0) > 0;
 }
 
+// Marca a lista como alterada (aparece como "atualizada em" na tela de listas)
+async function touchList(listId: number) {
+  await pool.query('UPDATE shopping_lists SET updated_at = NOW() WHERE id = $1', [listId]);
+}
+
 // Retorna null se a lista não existe ou não é do usuário
 export async function addItem(
   userId: number,
@@ -75,6 +80,7 @@ export async function addItem(
      RETURNING *`,
     [listId, productId, quantity, userId]
   );
+  if (result.rows[0]) await touchList(listId);
   return result.rows[0] ?? null;
 }
 
@@ -94,6 +100,7 @@ export async function updateItem(
      RETURNING i.*`,
     [data.quantity ?? null, data.is_purchased ?? null, itemId, listId, userId]
   );
+  if (result.rows[0]) await touchList(listId);
   return result.rows[0] ?? null;
 }
 
@@ -105,5 +112,7 @@ export async function deleteItem(userId: number, listId: number, itemId: number)
        AND sl.id = i.list_id AND sl.user_id = $3`,
     [itemId, listId, userId]
   );
-  return (result.rowCount ?? 0) > 0;
+  const deleted = (result.rowCount ?? 0) > 0;
+  if (deleted) await touchList(listId);
+  return deleted;
 }

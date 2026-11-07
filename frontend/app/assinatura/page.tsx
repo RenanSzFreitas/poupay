@@ -3,6 +3,21 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
+import { ErrorText, Loading, PageTitle } from '@/components/ui';
+
+// O preço é definido no produto do AbacatePay; aqui só exibimos (ex.: NEXT_PUBLIC_PREMIUM_PRICE=9,90)
+const PREMIUM_PRICE = process.env.NEXT_PUBLIC_PREMIUM_PRICE;
+
+const FREE = ['Catálogo de supermercados e produtos', 'Listas de compras', 'Histórico de compras'];
+const PREMIUM = ['Tudo do plano Grátis', 'Comparar preços entre supermercados', 'Cálculo de quanto você economizou'];
+
+function Check({ className }: { className: string }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`mt-0.5 shrink-0 ${className}`}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  );
+}
 
 type Plan = {
   is_premium: boolean;
@@ -60,72 +75,85 @@ export default function AssinaturaPage() {
     }
   }
 
-  if (authLoading || !user || (!plan && !error)) {
-    return <main className="mx-auto max-w-4xl p-4">Carregando...</main>;
-  }
+  if (authLoading || !user || (!plan && !error)) return <Loading />;
 
   const until = plan?.premium_until
     ? new Date(plan.premium_until).toLocaleDateString('pt-BR')
     : null;
+  const premium = Boolean(plan?.is_premium);
+  const statusText = premium
+    ? plan?.subscription_status === 'cancelled'
+      ? `Status: cancelado${until ? ` · acesso até ${until}` : ''}`
+      : `Status: ativo${until ? ` · válido até ${until}` : ''}`
+    : 'Comparação de preços disponível no Premium';
 
   return (
-    <main className="mx-auto max-w-4xl p-4">
-      <h1 className="mb-4 text-2xl font-bold">Assinatura</h1>
+    <main className="page">
+      <PageTitle title="Assinatura" subtitle="Escolha o plano ideal para você." />
 
-      {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
+      <div className="mb-4">
+        <ErrorText>{error}</ErrorText>
+      </div>
 
-      {plan?.is_premium ? (
-        <div className="mb-6 rounded border border-green-600 bg-green-900/20 p-4">
-          <p className="font-semibold">
-            {plan.subscription_status === 'cancelled'
-              ? 'Assinatura cancelada'
-              : 'Poupay Premium ativo'}
-          </p>
-          {until && (
-            <p className="text-sm text-gray-400">
-              {plan.subscription_status === 'cancelled'
-                ? `Você mantém o acesso até ${until}.`
-                : `Acesso garantido até ${until}.`}
-            </p>
-          )}
-        </div>
-      ) : (
-        plan && (
-          <div className="mb-6 rounded border border-gray-700 p-4">
-            <p className="font-semibold">Você está no plano grátis</p>
-            <p className="mb-3 text-sm text-gray-400">
-              Assine para comparar suas listas automaticamente entre os supermercados. O valor é
-              mostrado na página de pagamento, antes de você confirmar.
-            </p>
-            <button
-              onClick={subscribe}
-              disabled={starting}
-              className="rounded bg-green-600 px-5 py-2 text-white disabled:opacity-50"
-            >
-              {starting ? 'Abrindo o pagamento...' : 'Assinar o Premium'}
-            </button>
+      {plan && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl bg-sage px-5 py-4">
+          <div>
+            <p className="font-bold">Plano atual: {premium ? 'Premium' : 'Grátis'}</p>
+            <p className="text-xs text-muted">{statusText}</p>
           </div>
-        )
+          <span className="text-sm font-bold">{premium ? 'Premium' : 'Grátis'}</span>
+        </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <section className="rounded border border-gray-700 p-4">
-          <h2 className="mb-2 font-semibold">Grátis</h2>
-          <ul className="list-disc space-y-1 pl-5 text-sm">
-            <li>Consultar supermercados e produtos</li>
-            <li>Montar listas de compras</li>
-            <li>Favoritar e selecionar supermercados</li>
-            <li>Registrar compras e ver o histórico de gastos</li>
+      <div className="grid items-start gap-6 md:grid-cols-2">
+        <section className="card">
+          <h2 className="text-xl font-bold">Grátis</h2>
+          <p className="mt-3 text-3xl font-extrabold">R$ 0</p>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            {FREE.map((f) => (
+              <li key={f} className="flex gap-2">
+                <Check className="text-gold-dark" />
+                {f}
+              </li>
+            ))}
           </ul>
+          <div className="btn-outline mt-6 w-full cursor-default py-2.5 hover:border-line hover:text-ink">
+            {premium ? 'Incluído no Premium' : 'Plano atual'}
+          </div>
         </section>
 
-        <section className="rounded border border-green-600 p-4">
-          <h2 className="mb-2 font-semibold">Premium</h2>
-          <ul className="list-disc space-y-1 pl-5 text-sm">
-            <li>Tudo do plano grátis</li>
-            <li>Comparação automática da lista entre supermercados</li>
-            <li>Economia realizada e potencial em cada compra</li>
+        <section className="rounded-3xl bg-forest p-6 text-white shadow-xl">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold">Premium</h2>
+            <span className="badge-gold">Recomendado</span>
+          </div>
+          <p className="mt-3 text-3xl font-extrabold">
+            {PREMIUM_PRICE ? (
+              <>
+                R$ {PREMIUM_PRICE}
+                <span className="text-sm font-medium text-white/70"> /mês</span>
+              </>
+            ) : (
+              <span className="text-lg font-semibold">Valor mostrado no pagamento</span>
+            )}
+          </p>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            {PREMIUM.map((f) => (
+              <li key={f} className="flex gap-2">
+                <Check className="text-gold" />
+                {f}
+              </li>
+            ))}
           </ul>
+          {premium ? (
+            <div className="mt-6 rounded-xl bg-forest-2 py-2.5 text-center font-semibold text-gold">
+              {plan?.subscription_status === 'cancelled' ? 'Assinatura cancelada' : 'Plano atual'}
+            </div>
+          ) : (
+            <button onClick={subscribe} disabled={starting} className="btn-gold mt-6 w-full">
+              {starting ? 'Abrindo o pagamento...' : 'Assinar o Premium'}
+            </button>
+          )}
         </section>
       </div>
     </main>

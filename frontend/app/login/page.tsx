@@ -4,14 +4,10 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import PasswordInput from '@/components/PasswordInput';
+import ExampleCard from '@/components/ExampleCard';
+import Logo from '@/components/Logo';
 import { useAuth } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
-
-// Itens ilustrativos do card "Exemplo de pedido"
-const EXEMPLO = [
-  { name: 'Shampoo', market: 'Confiança', price: 'R$ 18,90' },
-  { name: 'Condicionador', market: 'Taust', price: 'R$ 21,50' },
-];
 
 const input =
   'w-full rounded-xl border border-[#e3e2d6] bg-[#fafaf6] px-4 py-3 text-[#1f2a12] placeholder:text-[#9a9a8c] focus:border-[#4f5e2f] focus:outline-none';
@@ -40,17 +36,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="grid flex-1 bg-[#f6f5ef] md:grid-cols-[1fr_1fr]">
+    <main className="grid min-h-screen flex-1 bg-[#f6f5ef] md:grid-cols-[1fr_1fr]">
       {/* Lado institucional */}
       <section className="relative hidden overflow-hidden bg-[#2f3d1e] px-12 py-14 text-white md:flex md:flex-col">
         <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-[#3b4a26]" />
         <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-[#4f5e2f]" />
 
-        <div className="relative flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e8b931]">
-            <span className="block h-4 w-5 rounded-[60%_0] bg-[#2f3d1e]" />
-          </span>
-          <span className="text-2xl font-bold">Poupay</span>
+        <div className="relative">
+          <Logo variant="light" />
         </div>
 
         <span className="relative mt-16 w-fit rounded-full bg-[#e8b931] px-4 py-1 text-sm font-semibold text-[#2f3d1e]">
@@ -63,27 +56,8 @@ export default function LoginPage() {
           Comparamos os mercados da sua região e o motoboy busca cada produto onde ele está mais barato.
         </p>
 
-        <div className="relative mt-10 max-w-md rounded-3xl bg-white p-6 text-[#1f2a12] shadow-xl">
-          <p className="mb-4 text-sm font-semibold text-[#6b6f5a]">Exemplo de pedido</p>
-          {EXEMPLO.map((item) => (
-            <div key={item.name} className="mb-3 flex items-center gap-4">
-              <span className="h-12 w-12 rounded-xl bg-[#e8ecdc]" />
-              <div className="flex-1">
-                <p className="font-semibold">{item.name}</p>
-                <p className="text-sm text-[#6b6f5a]">{item.market}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold">{item.price}</p>
-                <span className="rounded-full bg-[#f6e3a8] px-2 py-0.5 text-xs font-semibold">
-                  Mais barato
-                </span>
-              </div>
-            </div>
-          ))}
-          <div className="mt-4 flex justify-between border-t border-dashed border-[#d9d9cc] pt-4">
-            <span>Você economiza</span>
-            <span className="font-bold text-[#4f5e2f]">R$ 7,30</span>
-          </div>
+        <div className="relative mt-10 max-w-md">
+          <ExampleCard title="Exemplo de pedido" />
         </div>
 
         <ol className="relative mt-auto flex gap-6 pt-10 text-sm text-white/80">
@@ -96,7 +70,10 @@ export default function LoginPage() {
       </section>
 
       {/* Formulário */}
-      <section className="flex items-center justify-center p-4 py-12">
+      <section className="flex flex-col items-center justify-center gap-6 p-4 py-12">
+        <div className="md:hidden">
+          <Logo />
+        </div>
         <form
           onSubmit={handleSubmit}
           className="w-full max-w-md space-y-4 rounded-3xl bg-white p-8 text-[#1f2a12] shadow-xl sm:p-11"

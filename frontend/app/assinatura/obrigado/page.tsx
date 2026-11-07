@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
+import { Loading, PageTitle } from '@/components/ui';
 
 export default function ObrigadoPage() {
   const { token, user, loading } = useRequireAuth();
@@ -41,41 +42,52 @@ export default function ObrigadoPage() {
     };
   }, [token]);
 
-  if (loading || !user) {
-    return <main className="mx-auto max-w-4xl p-4">Carregando...</main>;
-  }
+  if (loading || !user) return <Loading />;
 
   return (
-    <main className="mx-auto max-w-4xl p-4">
-      {status === 'checking' && (
-        <>
-          <h1 className="mb-2 text-2xl font-bold">Confirmando seu pagamento...</h1>
-          <p className="text-sm text-gray-400">Isso costuma levar alguns segundos.</p>
-        </>
-      )}
+    <main className="page">
+      <PageTitle title="Obrigado!" subtitle="Estamos confirmando seu pagamento com o banco." />
 
-      {status === 'active' && (
-        <>
-          <h1 className="mb-2 text-2xl font-bold">Pagamento confirmado!</h1>
-          <p className="mb-4">Seu acesso ao Poupay Premium já está liberado.</p>
-          <Link href="/listas" className="rounded bg-green-600 px-4 py-2 text-white">
-            Ir para minhas listas
-          </Link>
-        </>
-      )}
+      <section className="card mx-auto max-w-md py-10 text-center" aria-live="polite">
+        {status === 'checking' && (
+          <>
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-olive">
+              <span className="h-6 w-6 animate-spin rounded-full border-[3px] border-white/30 border-t-white" />
+            </span>
+            <h2 className="mt-4 text-2xl font-extrabold">Confirmando seu pagamento...</h2>
+            <p className="mt-1 text-muted">Aguarde um instante, estamos confirmando com o banco.</p>
+          </>
+        )}
 
-      {status === 'slow' && (
-        <>
-          <h1 className="mb-2 text-2xl font-bold">Ainda estamos confirmando</h1>
-          <p className="mb-4 text-sm text-gray-400">
-            A confirmação do pagamento está demorando mais que o normal. Seu acesso será liberado
-            assim que ela chegar. Se você não pagou, é só voltar e tentar de novo.
-          </p>
-          <Link href="/assinatura" className="rounded border px-4 py-2">
-            Ver minha assinatura
-          </Link>
-        </>
-      )}
+        {status === 'active' && (
+          <>
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-olive text-white">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+            </span>
+            <h2 className="mt-4 text-2xl font-extrabold">Pagamento confirmado!</h2>
+            <p className="mt-1 text-muted">Seu Premium já está ativo.</p>
+            <Link href="/listas" className="btn-primary mt-6">Ver minhas listas</Link>
+          </>
+        )}
+
+        {status === 'slow' && (
+          <>
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gold text-forest">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.5" />
+                <path d="M12 7.5V12l3 2" />
+              </svg>
+            </span>
+            <h2 className="mt-4 text-2xl font-extrabold">Ainda estamos confirmando</h2>
+            <p className="mt-1 text-muted">
+              Está demorando um pouco. Seu acesso é liberado assim que o pagamento for confirmado.
+            </p>
+            <Link href="/assinatura" className="btn-outline mt-6 px-5 py-2.5">Ver assinatura</Link>
+          </>
+        )}
+      </section>
     </main>
   );
 }
