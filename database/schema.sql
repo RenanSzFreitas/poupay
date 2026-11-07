@@ -124,3 +124,29 @@ CREATE TABLE IF NOT EXISTS billing_events (
   event VARCHAR(60) NOT NULL,
   received_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- Perfil: dados pessoais extras (opcionais)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(11);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS cpf VARCHAR(11);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_cpf ON users (cpf) WHERE cpf IS NOT NULL;
+
+-- Endereços de entrega do usuário
+CREATE TABLE IF NOT EXISTS user_addresses (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  label VARCHAR(40) NOT NULL,
+  street VARCHAR(150) NOT NULL,
+  number VARCHAR(20) NOT NULL,
+  complement VARCHAR(100),
+  neighborhood VARCHAR(100) NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  state CHAR(2) NOT NULL,
+  zip_code CHAR(8) NOT NULL,
+  is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_addresses_user ON user_addresses (user_id);
+-- No máximo um endereço principal por usuário
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_addresses_primary
+  ON user_addresses (user_id) WHERE is_primary;

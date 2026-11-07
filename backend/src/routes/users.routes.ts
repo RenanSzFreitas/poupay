@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middlewares/auth.middleware';
 import * as prefs from '../services/market-preferences.service';
+import * as profile from '../services/profile.service';
 
 const router = Router();
 
@@ -80,6 +81,137 @@ router.put('/selected-markets', async (req: AuthRequest, res) => {
     if (err.code === '23503') {
       return res.status(404).json({ error: 'Algum supermercado não foi encontrado' });
     }
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// ---- Perfil ----
+
+const digits = (v: string) => profile.onlyDigits(v);
+const emptyToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
+
+const profileSchema = z.object({
+  name: z.string().trim().min(2).max(100).optional(),
+  email: z.string().trim().email().max(255).optional(),
+  phone: z.preprocess(
+    emptyToNull,
+    z.string().transform(digits).pipe(z.string().regex(/^\d{10,11}$/, 'Celular inválido')).nullable()
+  ).optional(),
+  cpf: z.preprocess(
+    emptyToNull,
+    z.string().transform(digits).refine(profile.isValidCpf, 'CPF inválido').nullable()
+  ).optional(),
+});
+
+router.get('/', async (req: AuthRequest, res) => {
+  try {
+    const user = await profile.getProfile(userIdOf(req));
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    return res.json(user);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+router.patch('/', async (req: AuthRequest, res) => {
+  const parsed = profileSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'Dados inválidos',
+      details: parsed.error.flatten().fieldErrors,
+    });
+  }
+
+  try {
+    const user = await profile.updateProfile(userIdOf(req), parsed.data);
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    return res.json(user);
+  } catch (err: any) {
+    if (err.code === '23505') {
+      const field = String(err.constraint ?? '').includes('cpf') ? 'CPF' : 'E-mail';
+      return res.status(409).json({ error: `${field} já cadastrado` });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+router.get('/stats', async (req: AuthRequest, res) => {
+  try {
+    return res.json(await profile.getStats(userIdOf(req)));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// ---- Endereços ----
+
+const addressSchema = z.object({
+  label: z.string().trim().min(1).max(40),
+  street: z.string().trim().min(1).max(150),
+  number: z.string().trim().min(1).max(20),
+  complement: z.preprocess(emptyToNull, z.string().trim().max(100).nullable()).optional(),
+  neighborhood: z.string().trim().min(1).max(100),
+  city: z.string().trim().min(1).max(100),
+  state: z.string().trim().regex(/^[A-Za-z]{2}$/, 'UF inválida').transform((v) => v.toUpperCase()),
+  zip_code: z.string().transform(digits).pipe(z.string().regex(/^\d{8}$/, 'CEP inválido')),
+  is_primary: z.boolean().optional(),
+});
+
+router.get('/addresses', async (req: AuthRequest, res) => {
+  try {
+    return res.json(await profile.listAddresses(userIdOf(req)));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+router.post('/addresses', async (req: AuthRequest, res) => {
+  const parsed = addressSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Dados inválidos', details: parsed.error.flatten().fieldErrors });
+  }
+
+  try {
+    return res.status(201).json(await profile.createAddress(userIdOf(req), parsed.data));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+router.patch('/addresses/:id', async (req: AuthRequest, res) => {
+  const id = idSchema.safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: 'ID inválido' });
+
+  const parsed = addressSchema.partial().safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Dados inválidos', details: parsed.error.flatten().fieldErrors });
+  }
+
+  try {
+    const address = await profile.updateAddress(userIdOf(req), id.data, parsed.data);
+    if (!address) return res.status(404).json({ error: 'Endereço não encontrado' });
+    return res.json(address);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+router.delete('/addresses/:id', async (req: AuthRequest, res) => {
+  const id = idSchema.safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: 'ID inválido' });
+
+  try {
+    const removed = await profile.deleteAddress(userIdOf(req), id.data);
+    if (!removed) return res.status(404).json({ error: 'Endereço não encontrado' });
+    return res.status(204).send();
+  } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }

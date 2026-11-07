@@ -28,12 +28,17 @@ export default function Header() {
           <Link href="/assinatura" className="text-sm hover:underline">
             Premium
           </Link>
+          <Link href="/perfil" className="text-sm hover:underline">
+            Perfil
+          </Link>
         </div>
 
         <div className="flex items-center gap-3 text-sm">
           {loading ? null : user ? (
             <>
-              <span>{user.name}</span>
+              <Link href="/perfil" className="hover:underline">
+                {user.name}
+              </Link>
               <button onClick={logout} className="rounded border px-3 py-1">
                 Sair
               </button>
