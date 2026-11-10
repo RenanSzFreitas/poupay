@@ -2,8 +2,8 @@
 
 Plataforma web para comparar preços de supermercados. O usuário monta listas de compras, compara o total entre os mercados que escolher, registra o que comprou e acompanha quanto gastou e economizou.
 
-> Projeto da disciplina [nome da disciplina], [curso/instituição], [semestre].
-> Integrantes: [nomes do grupo].
+> Projeto das disciplinas Aplicações Digitais: Planejamento e Produção, Empreendedorismo e Prática em Bancos de Dados, do curso de Ciência da Computação, Centro Universitário do Sagrado Coração (Unisagrado), 4º semestre.
+> Integrantes: Renan, Guilherme, Maria Eduarda e Rebeca.
 
 ## Funcionalidades
 
