@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { ErrorText, PageTitle, Thumb } from '@/components/ui';
 
 type Market = {
   id: number;
@@ -141,94 +142,98 @@ export default function SupermercadosPage() {
   ];
 
   return (
-    <main className="mx-auto max-w-4xl p-4">
-      <h1 className="mb-1 text-2xl font-bold">Supermercados</h1>
-
-      {loggedIn ? (
-        <p className="mb-4 text-sm text-gray-400">
-          ★ Favorito é um atalho para os mercados que você mais usa. Marcar &quot;Comparar&quot; define
-          os mercados que entram nas suas comparações.
-        </p>
-      ) : (
-        <p className="mb-4 text-sm text-gray-400">
-          <Link href="/login" className="text-green-500 underline">
-            Entre
-          </Link>{' '}
-          para favoritar e selecionar supermercados.
-        </p>
-      )}
-
-      <input
-        className="mb-3 w-full rounded border border-gray-300 bg-white px-3 py-2 text-black"
-        placeholder="Buscar por nome ou cidade"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
+    <main className="page">
+      <PageTitle
+        title="Supermercados"
+        subtitle={
+          loggedIn ? (
+            'Escolha quais mercados entram nas suas comparações.'
+          ) : (
+            <>
+              <Link href="/login" className="link">Entre</Link> para favoritar e escolher os mercados das suas
+              comparações.
+            </>
+          )
+        }
       />
 
-      {loggedIn && (
-        <div className="mb-4 flex gap-2">
-          {tabs.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setFilter(t.key)}
-              className={`rounded border px-3 py-1 text-sm ${
-                filter === t.key ? 'border-green-600 bg-green-700 text-white' : 'border-gray-600'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        {loggedIn ? (
+          <div className="flex flex-wrap gap-2">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setFilter(t.key)}
+                className={filter === t.key ? 'chip-active' : 'chip'}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span />
+        )}
+        <input
+          className="field w-full py-2 sm:w-72"
+          placeholder="Buscar por nome ou cidade"
+          aria-label="Buscar supermercado"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       {error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <ErrorText>{error}</ErrorText>
       ) : loading ? (
-        <p>Carregando...</p>
+        <p className="text-muted">Carregando...</p>
       ) : visible.length === 0 ? (
-        <p>
-          {filter === 'todos'
-            ? 'Nenhum supermercado encontrado.'
-            : 'Nenhum supermercado nesta visão.'}
+        <p className="text-muted">
+          {filter === 'todos' ? 'Nenhum supermercado encontrado.' : 'Nenhum supermercado nesta visão.'}
         </p>
       ) : (
-        <ul className="space-y-2">
-          {visible.map((m) => (
-            <li
-              key={m.id}
-              className="flex items-center justify-between gap-3 rounded border border-gray-700 p-3"
-            >
-              <div>
-                <p className="font-semibold">{m.name}</p>
-                <p className="text-sm text-gray-400">
-                  {[m.address, m.city].filter(Boolean).join(' · ')}
-                </p>
-              </div>
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map((m) => {
+            const isSel = sels.includes(m.id);
+            const isFav = favs.includes(m.id);
+            return (
+              <li
+                key={m.id}
+                className={`card border-2 p-5 transition ${isSel ? 'border-olive' : 'border-transparent'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Thumb label={m.name} size="lg" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold">{m.name}</p>
+                    <p className="truncate text-xs text-muted">
+                      {[m.address, m.city].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                  {loggedIn && (
+                    <button
+                      onClick={() => toggleFavorite(m.id)}
+                      aria-label={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                      aria-pressed={isFav}
+                      className={`text-2xl leading-none transition ${isFav ? 'text-gold' : 'text-ink/50 hover:text-gold'}`}
+                    >
+                      {isFav ? '★' : '☆'}
+                    </button>
+                  )}
+                </div>
 
-              {loggedIn && (
-                <div className="flex items-center gap-4">
-                  <label className="flex cursor-pointer items-center gap-1 text-sm">
+                {loggedIn && (
+                  <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm">
                     <input
                       type="checkbox"
-                      checked={sels.includes(m.id)}
+                      checked={isSel}
                       onChange={() => toggleSelected(m.id)}
-                      className="h-4 w-4"
+                      className="h-4 w-4 accent-olive"
                     />
-                    Comparar
+                    Usar nas comparações
                   </label>
-                  <button
-                    onClick={() => toggleFavorite(m.id)}
-                    aria-label={favs.includes(m.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-                    className={`text-2xl leading-none ${
-                      favs.includes(m.id) ? 'text-yellow-400' : 'text-gray-500'
-                    }`}
-                  >
-                    {favs.includes(m.id) ? '★' : '☆'}
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </main>

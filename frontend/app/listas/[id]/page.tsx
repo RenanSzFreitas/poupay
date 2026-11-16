@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
+import { ErrorText, Loading, PageTitle, Thumb } from '@/components/ui';
 
 type Item = {
   id: number;
@@ -13,6 +14,7 @@ type Item = {
   brand: string | null;
   unit: string;
   size: number;
+  category: string;
   quantity: number;
   is_purchased: boolean;
 };
@@ -23,6 +25,7 @@ type Product = {
   id: number;
   name: string;
   brand: string | null;
+  category: string;
   unit: string;
   size: number;
 };
@@ -70,19 +73,21 @@ function ListaConteudo() {
     };
   }, [token, id, reloadKey]);
 
-  // Busca produtos para adicionar (só a partir de 2 letras)
+  // Produtos para adicionar: o começo do catálogo, ou a busca a partir de 2 letras
   useEffect(() => {
     const term = search.trim();
-    if (term.length < 2) return;
-
     let cancelled = false;
-    const timer = setTimeout(() => {
-      api<Product[]>(`/products?search=${encodeURIComponent(term)}`)
-        .then((data) => {
-          if (!cancelled) setResults(data.slice(0, 8));
-        })
-        .catch(() => {});
-    }, 300);
+    const timer = setTimeout(
+      () => {
+        const query = term.length >= 2 ? `?search=${encodeURIComponent(term)}` : '';
+        api<Product[]>(`/products${query}`)
+          .then((data) => {
+            if (!cancelled) setResults(data.slice(0, 8));
+          })
+          .catch(() => {});
+      },
+      term ? 300 : 0
+    );
 
     return () => {
       cancelled = true;
@@ -137,134 +142,138 @@ function ListaConteudo() {
     }
   }
 
-  if (authLoading || !user || loading) {
-    return <main className="mx-auto max-w-4xl p-4">Carregando...</main>;
-  }
+  if (authLoading || !user || loading) return <Loading />;
 
   if (!list) {
     return (
-      <main className="mx-auto max-w-4xl p-4">
-        <p className="mb-3 text-red-500">{error || 'Lista não encontrada.'}</p>
-        <Link href="/listas" className="text-green-500 underline">
-          Voltar às listas
-        </Link>
+      <main className="page">
+        <div className="mb-3">
+          <ErrorText>{error || 'Lista não encontrada.'}</ErrorText>
+        </div>
+        <Link href="/listas" className="link">Voltar às listas</Link>
       </main>
     );
   }
 
-  const visibleResults = search.trim().length >= 2 ? results : [];
+  const inList = new Set(list.items.map((i) => i.product_id));
+  const showResults = search.trim().length === 1 ? [] : results;
 
   return (
-    <main className="mx-auto max-w-4xl p-4">
-      <Link href="/listas" className="text-sm text-green-500 underline">
+    <main className="page">
+      <Link href="/listas" className="text-sm font-semibold text-muted hover:text-olive">
         ← Minhas listas
       </Link>
-      <div className="mb-4 mt-2 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{list.name}</h1>
-        {list.items.length > 0 && (
-          <Link
-            href={`/listas/${list.id}/comparar`}
-            className="rounded bg-green-600 px-4 py-2 text-white"
-          >
-            Comparar preços
-          </Link>
-        )}
+      <div className="mt-2">
+        <PageTitle
+          title={list.name}
+          subtitle="Adicione produtos e ajuste as quantidades."
+          action={
+            list.items.length > 0 && (
+              <Link href={`/listas/${list.id}/comparar`} className="btn-gold">
+                Comparar preços
+              </Link>
+            )
+          }
+        />
       </div>
 
-      {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
+      <div className="mb-4">
+        <ErrorText>{error}</ErrorText>
+      </div>
 
-      <section className="mb-6">
-        <input
-          className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-black"
-          placeholder="Buscar produto para adicionar..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="grid items-start gap-6 md:grid-cols-2">
+        <section className="card">
+          <h2 className="mb-4 text-xl font-bold">Adicionar produtos</h2>
+          <label htmlFor="buscar" className="label">Buscar</label>
+          <input
+            id="buscar"
+            className="field mb-4"
+            placeholder="Buscar no catálogo"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
-        {visibleResults.length > 0 && (
-          <ul className="mt-2 space-y-1">
-            {visibleResults.map((p) => (
-              <li
-                key={p.id}
-                className="flex items-center justify-between rounded border border-gray-700 p-2"
-              >
-                <span className="text-sm">
-                  {p.name}
-                  <span className="text-gray-400">
-                    {' '}
-                    · {[p.brand, `${p.size} ${p.unit}`].filter(Boolean).join(' · ')}
-                  </span>
-                </span>
-                <button
-                  onClick={() => addProduct(p.id)}
-                  className="rounded bg-green-600 px-3 py-1 text-sm text-white"
-                >
-                  Adicionar
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {showResults.length === 0 ? (
+            <p className="text-sm text-muted">
+              {search.trim().length === 1 ? 'Digite mais uma letra para buscar.' : 'Nenhum produto encontrado.'}
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {showResults.map((p) => (
+                <li key={p.id} className="flex items-center gap-3">
+                  <Thumb label={p.name} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">{p.name}</p>
+                    <p className="truncate text-xs text-muted">
+                      {[p.category, p.brand, `${p.size} ${p.unit}`].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => addProduct(p.id)}
+                    disabled={inList.has(p.id)}
+                    className="btn-outline px-3 py-1.5"
+                  >
+                    {inList.has(p.id) ? 'Na lista' : 'Adicionar'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-      {list.items.length === 0 ? (
-        <p>A lista está vazia. Busque um produto acima para adicionar.</p>
-      ) : (
-        <ul className="space-y-2">
-          {list.items.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-center gap-3 rounded border border-gray-700 p-3"
-            >
-              <input
-                type="checkbox"
-                checked={item.is_purchased}
-                onChange={(e) => updateItem(item, { is_purchased: e.target.checked })}
-                className="h-4 w-4"
-              />
+        <section className="card">
+          <h2 className="mb-4 text-xl font-bold">Itens da lista</h2>
 
-              <div className={`flex-1 ${item.is_purchased ? 'line-through opacity-50' : ''}`}>
-                <p className="font-semibold">{item.name}</p>
-                <p className="text-sm text-gray-400">
-                  {[item.brand, `${item.size} ${item.unit}`].filter(Boolean).join(' · ')}
-                </p>
-              </div>
+          {list.items.length === 0 ? (
+            <p className="text-sm text-muted">A lista está vazia. Adicione produtos ao lado.</p>
+          ) : (
+            <ul className="space-y-3">
+              {list.items.map((item) => (
+                <li key={item.id} className="flex items-center gap-3">
+                  <Thumb label={item.name} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">{item.name}</p>
+                    <p className="truncate text-xs text-muted">
+                      {[item.brand, `${item.size} ${item.unit}`].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => updateItem(item, { quantity: item.quantity - 1 })}
-                  disabled={item.quantity <= 1}
-                  className="h-7 w-7 rounded border border-gray-600 disabled:opacity-30"
-                >
-                  −
-                </button>
-                <span className="w-6 text-center">{item.quantity}</span>
-                <button
-                  onClick={() => updateItem(item, { quantity: item.quantity + 1 })}
-                  disabled={item.quantity >= 1000}
-                  className="h-7 w-7 rounded border border-gray-600 disabled:opacity-30"
-                >
-                  +
-                </button>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => updateItem(item, { quantity: item.quantity - 1 })}
+                      disabled={item.quantity <= 1}
+                      aria-label={`Diminuir ${item.name}`}
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-line font-bold hover:border-olive disabled:opacity-30"
+                    >
+                      −
+                    </button>
+                    <span className="w-6 text-center font-semibold">{item.quantity}</span>
+                    <button
+                      onClick={() => updateItem(item, { quantity: item.quantity + 1 })}
+                      disabled={item.quantity >= 1000}
+                      aria-label={`Aumentar ${item.name}`}
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-line font-bold hover:border-olive disabled:opacity-30"
+                    >
+                      +
+                    </button>
+                  </div>
 
-              <button
-                onClick={() => removeItem(item)}
-                className="rounded border border-gray-600 px-2 py-1 text-xs hover:bg-gray-800"
-              >
-                Remover
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+                  <button onClick={() => removeItem(item)} className="link-danger ml-2">
+                    Remover
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
 
 export default function ListaPage() {
   return (
-    <Suspense fallback={<main className="mx-auto max-w-4xl p-4">Carregando...</main>}>
+    <Suspense fallback={<Loading />}>
       <ListaConteudo />
     </Suspense>
   );

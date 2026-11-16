@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { ErrorText, PageTitle } from '@/components/ui';
+
+// Categorias do design; outras que vierem do catálogo entram depois destas
+const BASE_CATEGORIES = ['Higiene', 'Limpeza', 'Mercearia', 'Bebidas', 'Hortifruti'];
 
 type Product = {
   id: number;
@@ -18,6 +22,7 @@ export default function ProdutosPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [known, setKnown] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,6 +39,12 @@ export default function ProdutosPage() {
         .then((data) => {
           if (cancelled) return;
           setProducts(data);
+          // Guarda categorias que existem no catálogo e não estão na lista fixa
+          setKnown((prev) => {
+            const next = new Set(prev);
+            data.forEach((p) => next.add(p.category));
+            return next.size === prev.length ? prev : Array.from(next);
+          });
           setError('');
         })
         .catch((err) => {
@@ -50,52 +61,54 @@ export default function ProdutosPage() {
     };
   }, [search, category]);
 
-  return (
-    <main className="mx-auto max-w-4xl p-4">
-      <h1 className="mb-4 text-2xl font-bold">Produtos</h1>
+  const lower = BASE_CATEGORIES.map((c) => c.toLowerCase());
+  const categories = [
+    ...BASE_CATEGORIES,
+    ...known.filter((c) => !lower.includes(c.toLowerCase())).sort(),
+  ];
+  const isActive = (c: string) => category.toLowerCase() === c.toLowerCase();
 
+  return (
+    <main className="page">
+      <PageTitle title="Produtos" subtitle="Busque no catálogo e encontre o que você precisa." />
+
+      <label htmlFor="busca" className="label">Buscar produto</label>
       <input
-        className="mb-3 w-full rounded border border-gray-300 bg-white px-3 py-2 text-black"
-        placeholder="Buscar por nome ou marca"
+        id="busca"
+        className="field mb-4"
+        placeholder="Digite o nome do produto"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {category && (
-        <p className="mb-3 text-sm">
-          Categoria:{' '}
-          <span className="rounded bg-green-700 px-2 py-0.5 text-white">{category}</span>{' '}
-          <button onClick={() => setCategory('')} className="underline">
-            limpar filtro
+      <div className="mb-6 flex flex-wrap gap-2">
+        <button onClick={() => setCategory('')} className={category === '' ? 'chip-active' : 'chip'}>
+          Todas
+        </button>
+        {categories.map((c) => (
+          <button key={c} onClick={() => setCategory(c)} className={isActive(c) ? 'chip-active' : 'chip'}>
+            {c}
           </button>
-        </p>
-      )}
+        ))}
+      </div>
 
       {error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <ErrorText>{error}</ErrorText>
       ) : loading ? (
-        <p>Carregando...</p>
+        <p className="text-muted">Carregando...</p>
       ) : products.length === 0 ? (
-        <p>Nenhum produto encontrado.</p>
+        <p className="text-muted">Nenhum produto encontrado.</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {products.map((p) => (
-            <li
-              key={p.id}
-              className="flex items-center justify-between rounded border border-gray-700 p-3"
-            >
-              <div>
-                <p className="font-semibold">{p.name}</p>
-                <p className="text-sm text-gray-400">
-                  {[p.brand, `${p.size} ${p.unit}`].filter(Boolean).join(' · ')}
-                </p>
+            <li key={p.id} className="card p-3 sm:p-4">
+              <div className="flex aspect-[16/10] items-center justify-center rounded-2xl bg-sage text-3xl font-bold text-olive/40">
+                {p.name.charAt(0).toUpperCase()}
               </div>
-              <button
-                onClick={() => setCategory(p.category)}
-                className="rounded border border-gray-600 px-2 py-1 text-xs hover:bg-gray-800"
-              >
-                {p.category}
-              </button>
+              <p className="mt-3 font-bold leading-tight">{p.name}</p>
+              <p className="text-xs text-muted">
+                {[p.category, p.brand, `${p.size} ${p.unit}`].filter(Boolean).join(' · ')}
+              </p>
             </li>
           ))}
         </ul>

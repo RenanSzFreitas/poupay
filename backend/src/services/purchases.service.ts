@@ -132,7 +132,8 @@ export async function getPurchase(userId: number, id: number) {
 
 export async function listPurchases(userId: number, from?: string, to?: string) {
   const result = await pool.query(
-    `SELECT ${COLUMNS}
+    `SELECT ${COLUMNS},
+            (SELECT COUNT(*)::int FROM purchase_items i WHERE i.purchase_id = p.id) AS item_count
      FROM purchases p
      JOIN markets m ON m.id = p.market_id
      WHERE p.user_id = $1

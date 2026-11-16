@@ -12,6 +12,8 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  // Atualiza o usuário em memória (ex.: depois de editar o perfil)
+  updateUser: (u: User) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -61,8 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
+  function updateUser(u: User) {
+    setUser({ id: u.id, name: u.name, email: u.email });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

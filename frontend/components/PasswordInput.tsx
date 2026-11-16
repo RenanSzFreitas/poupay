@@ -2,9 +2,12 @@
 
 import { useState, type InputHTMLAttributes } from 'react';
 
-type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'className'>;
+type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'className'> & {
+  // Classes do campo; sem isso usa o estilo padrão
+  inputClassName?: string;
+};
 
-export default function PasswordInput(props: Props) {
+export default function PasswordInput({ inputClassName, ...props }: Props) {
   const [visible, setVisible] = useState(false);
 
   return (
@@ -12,7 +15,7 @@ export default function PasswordInput(props: Props) {
       <input
         {...props}
         type={visible ? 'text' : 'password'}
-        className="w-full rounded border border-gray-300 bg-white px-3 py-2 pr-10 text-black"
+        className={`${inputClassName ?? 'w-full rounded border border-gray-300 bg-white px-3 py-2 text-black'} pr-10`}
       />
       <button
         type="button"

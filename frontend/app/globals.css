@@ -1,26 +1,69 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Paleta do Poupay (design das telas) */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-forest: #2f3d1e;
+  --color-forest-2: #3b4a26;
+  --color-olive: #4f5e2f;
+  --color-olive-dark: #435027;
+  --color-gold: #e8b931;
+  --color-gold-dark: #d4a620;
+  --color-gold-soft: #f6e3a8;
+  --color-cream: #f6f5ef;
+  --color-field: #fafaf6;
+  --color-line: #e3e2d6;
+  --color-sage: #e8ecdc;
+  --color-sage-soft: #f3f5e9;
+  --color-ink: #1f2a12;
+  --color-muted: #6b6f5a;
+  --color-faint: #9a9a8c;
+  --font-sans: var(--font-jakarta);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+/* Peças reaproveitadas em todas as telas */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-olive px-5 py-2.5 font-semibold text-white shadow-[0_6px_16px_rgba(79,94,47,0.3)] transition hover:bg-olive-dark disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-gold {
+    @apply inline-flex items-center justify-center rounded-xl bg-gold px-5 py-2.5 font-semibold text-forest shadow-[0_6px_16px_rgba(232,185,49,0.3)] transition hover:bg-gold-dark disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-xl border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:border-olive hover:text-olive disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .link {
+    @apply font-semibold text-olive underline underline-offset-2 hover:text-olive-dark;
+  }
+  .link-danger {
+    @apply text-sm font-semibold text-red-700 underline underline-offset-2 hover:text-red-800;
+  }
+  .field {
+    @apply w-full rounded-xl border border-line bg-field px-4 py-3 text-ink placeholder:text-faint focus:border-olive focus:outline-none;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-semibold text-ink;
+  }
+  .card {
+    @apply rounded-3xl bg-white p-6 shadow-[0_4px_20px_rgba(31,42,18,0.06)];
+  }
+  .chip {
+    @apply rounded-full border border-line bg-white px-4 py-1.5 text-sm font-semibold text-ink transition hover:border-olive;
+  }
+  .chip-active {
+    @apply rounded-full border border-olive bg-olive px-4 py-1.5 text-sm font-semibold text-white;
+  }
+  .thumb {
+    @apply flex shrink-0 items-center justify-center rounded-xl bg-sage font-bold text-olive/60;
+  }
+  .badge-gold {
+    @apply inline-block rounded-full bg-gold-soft px-2.5 py-0.5 text-xs font-semibold text-forest;
+  }
+  .page {
+    @apply mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6;
+  }
 }
