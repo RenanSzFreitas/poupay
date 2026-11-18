@@ -1,6 +1,13 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { api } from './api';
 
 export type User = { id: number; name: string; email: string };
@@ -12,12 +19,12 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  // Atualiza o usuário em memória (ex.: depois de editar o perfil)
   updateUser: (u: User) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const TOKEN_KEY = 'poupay_token';
+const subscribeNoop = () => () => {};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -76,6 +83,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
+
+  const hydrated = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false
+  );
+
   if (!ctx) throw new Error('useAuth precisa estar dentro de um AuthProvider');
-  return ctx;
+
+
+  return hydrated ? ctx : { ...ctx, user: null, token: null, loading: true };
 }
