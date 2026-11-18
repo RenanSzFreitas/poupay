@@ -22,7 +22,7 @@ export async function createSubscriptionCheckout(userId: number) {
     body: JSON.stringify({
       items: [{ id: productId, quantity: 1 }],
       methods: ['CARD'],
-      externalId: `poupay-user-${userId}`,
+      externalId: `poupay-user-${userId}-${Date.now()}`,
       metadata: { userId: String(userId) },
       completionUrl: `${frontend}/assinatura/obrigado`,
       returnUrl: `${frontend}/assinatura`,
@@ -37,7 +37,8 @@ export async function createSubscriptionCheckout(userId: number) {
   }
 
   await pool.query(
-    'INSERT INTO billing_subscriptions (user_id, checkout_id) VALUES ($1, $2)',
+    `INSERT INTO billing_subscriptions (user_id, checkout_id) VALUES ($1, $2)
+     ON CONFLICT (checkout_id) DO NOTHING`,
     [userId, body.data.id]
   );
 
@@ -85,7 +86,8 @@ async function activate(client: PoolClient, data: any) {
 
   // 3) Plano B: usa o externalId que enviamos ao criar o checkout
   const externalId = data?.checkout?.externalId ?? data?.payment?.externalId;
-  const match = typeof externalId === 'string' ? externalId.match(/^poupay-user-(\d+)$/) : null;
+    const match =
+    typeof externalId === 'string' ? externalId.match(/^poupay-user-(\d+)(?:-\d+)?$/) : null;
   if (!row && match) {
     row = (
       await client.query(
