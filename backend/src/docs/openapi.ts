@@ -65,27 +65,6 @@ export const openapi = {
           created_at: { type: 'string', format: 'date-time' },
         },
       },
-      AddressInput: {
-        type: 'object',
-        required: ['label', 'street', 'number', 'neighborhood', 'city', 'state', 'zip_code'],
-        properties: {
-          label: { type: 'string', example: 'Casa' },
-          street: { type: 'string' },
-          number: { type: 'string' },
-          complement: { type: 'string', nullable: true },
-          neighborhood: { type: 'string' },
-          city: { type: 'string' },
-          state: { type: 'string', example: 'SP' },
-          zip_code: { type: 'string', example: '01001-000' },
-          is_primary: { type: 'boolean', description: 'true torna este o endereço principal' },
-        },
-      },
-      Address: {
-        allOf: [
-          ref('AddressInput'),
-          { type: 'object', properties: { id: { type: 'integer' }, is_primary: { type: 'boolean' } } },
-        ],
-      },
       User: {
         type: 'object',
         properties: {
@@ -434,30 +413,6 @@ export const openapi = {
           }),
           401: err('Unauthorized'),
         },
-      },
-    },
-    '/users/me/addresses': {
-      get: {
-        tags: ['Perfil'], summary: 'Listar endereços de entrega (principal primeiro)', security: auth,
-        responses: { 200: json('Endereços', { type: 'array', items: ref('Address') }), 401: err('Unauthorized') },
-      },
-      post: {
-        tags: ['Perfil'], summary: 'Adicionar endereço (o primeiro vira principal)', security: auth,
-        requestBody: body(ref('AddressInput')),
-        responses: { 201: json('Criado', ref('Address')), 400: err('BadRequest'), 401: err('Unauthorized') },
-      },
-    },
-    '/users/me/addresses/{id}': {
-      patch: {
-        tags: ['Perfil'], summary: 'Editar endereço (só os campos enviados)', security: auth,
-        parameters: [pathId],
-        requestBody: body(ref('AddressInput')),
-        responses: { 200: json('Atualizado', ref('Address')), 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound') },
-      },
-      delete: {
-        tags: ['Perfil'], summary: 'Remover endereço', security: auth,
-        parameters: [pathId],
-        responses: { 204: noContent, 400: err('BadRequest'), 401: err('Unauthorized'), 404: err('NotFound') },
       },
     },
     '/users/me/favorite-markets': {
