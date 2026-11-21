@@ -5,9 +5,9 @@ import ExampleCard from '@/components/ExampleCard';
 import { useAuth } from '@/lib/auth';
 
 const STEPS = [
-  { title: 'Monte sua lista', text: 'Escolha os produtos do catálogo e ajuste as quantidades.' },
-  { title: 'Compare os mercados', text: 'Veja o total em um mercado só ou o mais barato de cada item.' },
-  { title: 'Registre e acompanhe', text: 'Guarde suas compras e veja sua economia ao longo do tempo.' },
+  { title: 'Busque', text: 'Encontre os produtos no catálogo e monte a sua lista.' },
+  { title: 'Compare', text: 'Veja o total em um mercado só ou o mais barato de cada item.' },
+  { title: 'Poupe', text: 'Registre suas compras e acompanhe quanto você economiza.' },
 ];
 
 export default function Home() {

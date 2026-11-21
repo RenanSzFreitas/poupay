@@ -47,23 +47,23 @@ export default function LoginPage() {
         </div>
 
         <span className="relative mt-16 w-fit rounded-full bg-[#e8b931] px-4 py-1 text-sm font-semibold text-[#2f3d1e]">
-          Compare. Divida. Receba.
+          Compare. Escolha. Economize.
         </span>
         <h1 className="relative mt-6 text-5xl font-bold leading-tight">
-          Cada item pelo menor preço, em um pedido só.
+          Cada item pelo menor preço, em um só lugar.
         </h1>
         <p className="relative mt-4 max-w-md text-lg text-white/80">
-          Comparamos os mercados da sua região e o motoboy busca cada produto onde ele está mais barato.
+          Monte sua lista, compare os supermercados da sua região e veja quanto você economiza.
         </p>
 
         <div className="relative mt-10 max-w-md">
-          <ExampleCard title="Exemplo de pedido" />
+          <ExampleCard title="Exemplo de lista" />
         </div>
 
         <ol className="relative mt-auto flex gap-6 pt-10 text-sm text-white/80">
-          {['Busque', 'Compare', 'Receba em casa'].map((step, i) => (
+          {['Busque', 'Compare', 'sPoupe'].map((step, i) => (
             <li key={step}>
-              <span className="font-semibold text-[#e8b931]">{i + 1}</span> {step}
+              <span className="font-semibold text-[#e8b931]">{i + 1} - </span> {step}
             </li>
           ))}
         </ol>
@@ -80,7 +80,7 @@ export default function LoginPage() {
         >
           <div>
             <h2 className="text-3xl font-bold">Que bom te ver!</h2>
-            <p className="mt-1 text-[#6b6f5a]">Entre para economizar no seu próximo pedido.</p>
+            <p className="mt-1 text-[#6b6f5a]">Entre para economizar nas suas compras.</p>
           </div>
 
           <div>
