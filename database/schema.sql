@@ -150,3 +150,7 @@ CREATE INDEX IF NOT EXISTS idx_user_addresses_user ON user_addresses (user_id);
 -- No máximo um endereço principal por usuário
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_addresses_primary
   ON user_addresses (user_id) WHERE is_primary;
+
+-- Endereço da imagem de cada mercado e produto (arquivos em frontend/public/images)
+ALTER TABLE markets ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT;
