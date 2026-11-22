@@ -61,7 +61,7 @@ export default function LoginPage() {
         </div>
 
         <ol className="relative mt-auto flex gap-6 pt-10 text-sm text-white/80">
-          {['Busque', 'Compare', 'sPoupe'].map((step, i) => (
+          {['Busque', 'Compare', 'Poupe'].map((step, i) => (
             <li key={step}>
               <span className="font-semibold text-[#e8b931]">{i + 1} - </span> {step}
             </li>

@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { ErrorText, PageTitle, Thumb } from '@/components/ui';
+import { ErrorText, PageTitle } from '@/components/ui';
+import ImageWithFallback from '@/components/ImageWithFallback'; // NOVO
 
 type Market = {
   id: number;
   name: string;
   address: string | null;
   city: string;
+  image_url: string | null; // NOVO
 };
 
 type Filter = 'todos' | 'selecionados' | 'favoritos';
@@ -200,8 +202,17 @@ export default function SupermercadosPage() {
                 key={m.id}
                 className={`card border-2 p-5 transition ${isSel ? 'border-olive' : 'border-transparent'}`}
               >
+                {/* NOVO: foto do mercado no lugar da letra */}
+<ImageWithFallback
+  src={m.image_url}
+  alt={m.name}
+  fallbackText={m.name}
+  fit="contain"
+  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+  className="mb-4 h-48 w-full rounded-xl"
+/>
+
                 <div className="flex items-center gap-3">
-                  <Thumb label={m.name} size="lg" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{m.name}</p>
                     <p className="truncate text-xs text-muted">

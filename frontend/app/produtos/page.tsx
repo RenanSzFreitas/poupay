@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { ErrorText, PageTitle } from '@/components/ui';
+import ImageWithFallback from '@/components/ImageWithFallback'; // NOVO
 
 // Categorias do design; outras que vierem do catálogo entram depois destas
 const BASE_CATEGORIES = ['Higiene', 'Limpeza', 'Mercearia', 'Bebidas', 'Hortifruti'];
@@ -14,6 +15,7 @@ type Product = {
   category: string;
   unit: string;
   size: number;
+  image_url: string | null; // NOVO
 };
 
 export default function ProdutosPage() {
@@ -102,9 +104,15 @@ export default function ProdutosPage() {
         <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {products.map((p) => (
             <li key={p.id} className="card p-3 sm:p-4">
-              <div className="flex aspect-[16/10] items-center justify-center rounded-2xl bg-sage text-3xl font-bold text-olive/40">
-                {p.name.charAt(0).toUpperCase()}
-              </div>
+              {/* NOVO: caixa quadrada fixa; a imagem entra inteira, qualquer que seja o tamanho dela */}
+              <ImageWithFallback
+                src={p.image_url}
+                alt={p.name}
+                fallbackText={p.name}
+                fit="contain"
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className="aspect-square w-full rounded-2xl"
+              />
               <p className="mt-3 font-bold leading-tight">{p.name}</p>
               <p className="text-xs text-muted">
                 {[p.category, p.brand, `${p.size} ${p.unit}`].filter(Boolean).join(' · ')}

@@ -2,8 +2,8 @@ import { Thumb } from './ui';
 
 // Card ilustrativo (valores de exemplo) usado no início e no login
 const ITEMS = [
-  { name: 'Shampoo', market: 'Confiança', price: 'R$ 18,90' },
-  { name: 'Condicionador', market: 'Taust', price: 'R$ 21,50' },
+  { name: 'Shampoo', market: 'Empório Casa Nova', price: 'R$ 18,90' },
+  { name: 'Condicionador', market: 'Supermercado Pé de Milho', price: 'R$ 21,50' },
 ];
 
 export default function ExampleCard({ title }: { title: string }) {
