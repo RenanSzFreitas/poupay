@@ -39,6 +39,35 @@ Plataforma web para comparar preços de supermercados. O usuário monta listas d
 
 ## Como executar
 
+### Jeito rápido: tudo com um comando
+
+Com o Docker Desktop instalado, na raiz do projeto:
+
+```bash
+npm run dev
+```
+
+O script `scripts/dev.mjs` faz, nesta ordem:
+
+1. Cria o `backend/.env` (com `JWT_SECRET` e secret do webhook aleatórios) e o `frontend/.env.local`, se ainda não existirem.
+2. Abre o Docker Desktop se ele estiver fechado, sobe o banco (`docker compose up -d`) e espera ele ficar pronto.
+3. Cria as tabelas (`database/schema.sql`) e, só na primeira vez (catálogo vazio), carrega os dados de demonstração (`database/seed.sql`).
+4. Roda `npm install` no backend e no frontend, se ainda não foi feito.
+5. Inicia o backend (porta 3000), o frontend (porta 3001) e o túnel do ngrok, com a saída de cada um identificada por cor.
+
+`Ctrl+C` encerra backend, frontend e túnel. O banco continua no Docker (para parar: `docker compose down`). Para rodar sem o túnel: `npm run dev:sem-tunel`.
+
+**Premium automático (túnel com domínio fixo):** a AbacatePay só consegue avisar o backend por um endereço público. Para não precisar trocar a URL no painel a cada reinício, use o domínio fixo grátis do ngrok:
+
+1. Crie uma conta em ngrok.com e instale o ngrok (Windows: `winget install ngrok.ngrok`).
+2. Rode uma vez `ngrok config add-authtoken SEU_TOKEN` (o token está no painel do ngrok).
+3. No painel do ngrok, em **Domains**, pegue o domínio grátis (algo como `seu-nome.ngrok-free.app`) e coloque no `backend/.env`: `NGROK_DOMAIN=seu-nome.ngrok-free.app`.
+4. Rode `npm run dev`. O terminal mostra a URL completa do webhook. Cadastre essa URL **uma vez só** no painel da AbacatePay (Modo Teste), com os eventos `subscription.completed`, `subscription.renewed` e `subscription.cancelled`.
+
+A partir daí, ao pagar na AbacatePay, o webhook libera o Premium sozinho e a tela de retorno mostra "Pagamento confirmado!".
+
+### Passo a passo manual
+
 O sistema tem três partes que precisam estar ligadas ao mesmo tempo: o banco, o backend (porta 3000) e o frontend (porta 3001). Os passos 4 e 5 usam dois terminais separados.
 
 ### 1. Clonar o projeto
@@ -161,6 +190,8 @@ Os testes unitários cobrem as regras de negócio da comparação de preços e d
 
 ```
 poupay/
+├── package.json           # npm run dev: sobe tudo de uma vez
+├── scripts/dev.mjs        # Script do npm run dev
 ├── docker-compose.yml     # PostgreSQL para desenvolvimento
 ├── database/schema.sql    # Script de criação das tabelas
 ├── backend/
@@ -258,6 +289,7 @@ Quem libera o acesso é o webhook, e não o redirecionamento de volta para o sit
 | `ABACATEPAY_PRODUCT_ID` | ID (`prod_...`) do produto mensal criado no painel |
 | `ABACATEPAY_WEBHOOK_SECRET` | Secret do webhook; precisa ser igual ao cadastrado no painel |
 | `ABACATEPAY_HMAC_PUBLIC_KEY` | Chave pública HMAC, publicada na documentação de webhooks da AbacatePay |
+| `NGROK_DOMAIN` | Domínio fixo do ngrok usado pelo `npm run dev` para o túnel do webhook (opcional) |
 | `FRONTEND_URL` | Endereço do frontend, usado nos retornos do pagamento (padrão `http://localhost:3001`) |
 
 ### Tabelas
