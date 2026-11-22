@@ -11,6 +11,7 @@ type Props = {
   sizes?: string;
   fit?: 'cover' | 'contain';
   imgPadding?: string;
+  fallbackTextClass?: string;
 };
 
 // Mostra a imagem; se não houver endereço ou o arquivo falhar, mostra a inicial
@@ -21,7 +22,8 @@ export default function ImageWithFallback({
   className = '',
   sizes = '(max-width: 768px) 50vw, 25vw',
   fit = 'contain',
-  imgPadding = 'p-2'
+  imgPadding = 'p-2',
+  fallbackTextClass = 'text-3xl'
 }: Props) {
   const [failed, setFailed] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -36,7 +38,7 @@ export default function ImageWithFallback({
   if (!src || failed) {
     return (
       <div className={`flex items-center justify-center bg-[#e8ecd9] ${className}`}>
-        <span className="text-3xl font-bold text-[#4f5e2f]/40">
+        <span className={`${fallbackTextClass} font-bold text-[#4f5e2f]/40`}>
           {fallbackText.charAt(0).toUpperCase()}
         </span>
       </div>

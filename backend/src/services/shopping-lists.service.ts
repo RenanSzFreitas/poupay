@@ -30,7 +30,7 @@ export async function getList(userId: number, listId: number) {
   if (!list) return null;
 
   const items = await pool.query(
-    `SELECT i.id, i.product_id, p.name, p.brand, p.category, p.unit, p.size,
+    `SELECT i.id, i.product_id, p.name, p.brand, p.category, p.unit, p.size, p.image_url,
             i.quantity, i.is_purchased
      FROM shopping_list_items i
      JOIN products p ON p.id = i.product_id
