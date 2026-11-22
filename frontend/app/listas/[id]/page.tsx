@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
-import { ErrorText, Loading, PageTitle, Thumb } from '@/components/ui';
+import { ErrorText, Loading, PageTitle } from '@/components/ui';
+import ImageWithFallback from '@/components/ImageWithFallback';
 
 type Item = {
   id: number;
@@ -17,6 +18,7 @@ type Item = {
   category: string;
   quantity: number;
   is_purchased: boolean;
+  image_url?: string | null;
 };
 
 type ListDetail = { id: number; name: string; items: Item[] };
@@ -28,6 +30,7 @@ type Product = {
   category: string;
   unit: string;
   size: number;
+  image_url?: string | null;
 };
 
 function ListaConteudo() {
@@ -201,7 +204,7 @@ function ListaConteudo() {
             <ul className="space-y-3">
               {showResults.map((p) => (
                 <li key={p.id} className="flex items-center gap-3">
-                  <Thumb label={p.name} size="sm" />
+                  <ProductImage src={p.image_url} name={p.name} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{p.name}</p>
                     <p className="truncate text-xs text-muted">
@@ -230,7 +233,7 @@ function ListaConteudo() {
             <ul className="space-y-3">
               {list.items.map((item) => (
                 <li key={item.id} className="flex items-center gap-3">
-                  <Thumb label={item.name} size="sm" />
+                  <ProductImage src={item.image_url} name={item.name} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{item.name}</p>
                     <p className="truncate text-xs text-muted">
@@ -276,5 +279,20 @@ export default function ListaPage() {
     <Suspense fallback={<Loading />}>
       <ListaConteudo />
     </Suspense>
+  );
+}
+// Imagem do produto; sem imagem, mostra a inicial
+function ProductImage({ src, name }: { src?: string | null; name: string }) {
+  return (
+    <ImageWithFallback
+      src={src}
+      alt={name}
+      fallbackText={name}
+      fit="contain"
+      imgPadding="p-0.5"
+      sizes="44px"
+      fallbackTextClass="text-sm"
+      className="h-11 w-11 shrink-0 rounded-xl"
+    />
   );
 }

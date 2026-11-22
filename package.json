@@ -1,0 +1,9 @@
+{
+  "name": "poupay",
+  "private": true,
+  "description": "Atalhos para rodar o Poupay inteiro (banco, backend, frontend e túnel do webhook)",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:sem-tunel": "node scripts/dev.mjs --sem-tunel"
+  }
+}

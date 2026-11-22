@@ -33,7 +33,7 @@ export function withSavings<T extends PurchaseRow>(p: T) {
   };
 }
 
-const COLUMNS = `p.id, p.market_id, m.name AS market_name, p.list_id,
+const COLUMNS = `p.id, p.market_id, m.name AS market_name, m.image_url AS market_image_url, p.list_id,
   p.purchased_at::text AS purchased_at, p.total_paid,
   p.reference_highest_total, p.reference_lowest_total,
   p.reference_market_count, p.created_at`;

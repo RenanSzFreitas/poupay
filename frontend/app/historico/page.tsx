@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
-import { Empty, ErrorText, Loading, PageTitle, Thumb } from '@/components/ui';
+import { Empty, ErrorText, Loading, PageTitle } from '@/components/ui';
+import ImageWithFallback from '@/components/ImageWithFallback';
 
 type SummaryRow = {
   month: string;
@@ -18,6 +19,7 @@ type SummaryRow = {
 type Purchase = {
   id: number;
   market_name: string;
+  market_image_url?: string | null;
   purchased_at: string;
   total_paid: string;
   realized_savings: string | null;
@@ -165,7 +167,17 @@ function PurchaseCard({
   return (
     <li className="py-3">
       <button onClick={toggle} aria-expanded={open} className="flex w-full items-center gap-3 text-left">
-        <Thumb label={purchase.market_name} />
+        {/* Logo do mercado; sem logo, mostra a inicial */}
+        <ImageWithFallback
+          src={purchase.market_image_url}
+          alt={purchase.market_name}
+          fallbackText={purchase.market_name}
+          fit="contain"
+          imgPadding="p-0.5"
+          sizes="48px"
+          fallbackTextClass="text-lg"
+          className="h-12 w-12 shrink-0 rounded-xl"
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{purchase.market_name}</p>
           <p className="text-xs text-muted">
