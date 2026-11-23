@@ -182,33 +182,87 @@ function encerrar(code = 0) {
 process.on('SIGINT', () => encerrar(0));
 process.on('SIGTERM', () => encerrar(0));
 
+
+function localizarNgrok() {
+  const candidatos = [
+    path.join(
+      process.env.LOCALAPPDATA || '',
+      'Microsoft',
+      'WinGet',
+      'Packages',
+      'Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe',
+      'ngrok.exe'
+    ),
+  ];
+
+  for (const candidato of candidatos) {
+    if (existsSync(candidato)) return candidato;
+  }
+
+  const resultado = rodar('where.exe', ['ngrok']);
+
+  if (resultado.status === 0) {
+    return resultado.stdout.trim().split(/\r?\n/)[0];
+  }
+
+  return null;
+}
+
+
+
+
 function iniciarTunel(env) {
   if (semTunel) {
-    log('tunel', 'Sem túnel (--sem-tunel). Para liberar o Premium use backend/scripts/simular-webhook.mjs.');
+    log('tunel', 'Execução sem túnel (--sem-tunel).');
     return;
   }
 
-  const dominio = (env.NGROK_DOMAIN || '').replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  const dominio = (env.NGROK_DOMAIN || '')
+    .replace(/^https?:\/\//, '')
+    .replace(/\/+$/, '');
+
   if (!dominio) {
-    log('tunel', 'NGROK_DOMAIN vazio no backend/.env: rodando sem túnel.');
-    log('tunel', 'Sem ele a AbacatePay não consegue avisar o backend, e o Premium não é liberado sozinho.');
+    log('tunel', 'NGROK_DOMAIN vazio no backend/.env.');
     return;
   }
 
-  if (rodar('ngrok', ['version']).status !== 0) {
-    log('tunel', 'O ngrok não está instalado. No Windows: winget install ngrok.ngrok');
-    log('tunel', 'Depois: ngrok config add-authtoken SEU_TOKEN (o token fica no painel do ngrok).');
+  const ngrokExe = localizarNgrok();
+
+  if (!ngrokExe) {
+    log('tunel', 'Ngrok não encontrado. Verifique a instalação.');
     return;
   }
 
-  iniciar('tunel', 'ngrok', ['http', '3000', `--url=https://${dominio}`, '--log=stdout', '--log-level=warn'], ROOT);
+  iniciar(
+    'tunel',
+    ngrokExe,
+    [
+      'http',
+      '3000',
+      `--url=https://${dominio}`,
+      '--log=stdout',
+      '--log-level=warn'
+    ],
+    ROOT
+  );
 
   const secret = env.ABACATEPAY_WEBHOOK_SECRET || 'SEU_SECRET';
+
   log('tunel', `Túnel: https://${dominio} -> http://localhost:3000`);
-  log('tunel', 'URL do webhook para cadastrar UMA VEZ no painel da AbacatePay (Modo Teste):');
-  log('tunel', `\x1b[1mhttps://${dominio}/webhooks/abacatepay?webhookSecret=${encodeURIComponent(secret)}\x1b[0m`);
-  log('tunel', 'Eventos: subscription.completed, subscription.renewed e subscription.cancelled.');
+
+  log('tunel', 'URL do webhook para cadastrar na AbacatePay:');
+
+  log(
+    'tunel',
+    `https://${dominio}/webhooks/abacatepay?webhookSecret=${encodeURIComponent(secret)}`
+  );
+
+  log(
+    'tunel',
+    'Eventos: subscription.completed, subscription.renewed e subscription.cancelled.'
+  );
 }
+
 
 async function main() {
   log('poupay', 'Subindo o Poupay inteiro. Ctrl+C encerra tudo.');
