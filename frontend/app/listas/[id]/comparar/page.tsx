@@ -4,9 +4,10 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import PremiumPaywall from '@/components/PremiumPaywall';
-import { ErrorText, Loading, PageTitle, Thumb, brl } from '@/components/ui';
+import { ErrorText, Loading, PageTitle, brl } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
+import ImageWithFallback from '@/components/ImageWithFallback';
 
 type CompareItem = {
   product_id: number;
@@ -22,6 +23,7 @@ type CompareItem = {
 type MarketResult = {
   market_id: number;
   market_name: string;
+  market_image_url?: string | null;
   total: string;
   complete: boolean;
   missing_count: number;
@@ -212,7 +214,16 @@ function CompararConteudo() {
                             isChosen ? 'border-olive bg-sage-soft' : 'border-transparent hover:bg-cream'
                           }`}
                         >
-                          <Thumb label={m.market_name} />
+                          <ImageWithFallback
+                            src={m.market_image_url}
+                            alt={m.market_name}
+                            fallbackText={m.market_name}
+                            fit="contain"
+                            imgPadding="p-0.5"
+                            sizes="48px"
+                            fallbackTextClass="text-lg"
+                            className="h-12 w-12 shrink-0 rounded-xl"
+                          />
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-semibold">{m.market_name}</p>
                             {m.complete ? (

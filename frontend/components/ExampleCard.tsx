@@ -1,9 +1,10 @@
+import ImageWithFallback from './ImageWithFallback';
 import { Thumb } from './ui';
 
 // Card ilustrativo (valores de exemplo) usado no início e no login
 const ITEMS = [
-  { name: 'Shampoo', market: 'Empório Casa Nova', price: 'R$ 18,90' },
-  { name: 'Condicionador', market: 'Supermercado Pé de Milho', price: 'R$ 21,50' },
+  { name: 'Shampoo', market: 'Empório Casa Nova', price: 'R$ 18,90',     image_url: '/images/products/shampoo-brilho-natural.png'},
+  { name: 'Condicionador', market: 'Supermercado Pé de Milho', price: 'R$ 21,50', image_url: '/images/products/condicionador-brilho-natural.png'},
 ];
 
 export default function ExampleCard({ title }: { title: string }) {
@@ -13,7 +14,15 @@ export default function ExampleCard({ title }: { title: string }) {
       <ul className="space-y-3">
         {ITEMS.map((item) => (
           <li key={item.name} className="flex items-center gap-4">
-            <Thumb size="lg" />
+            <ImageWithFallback
+              src={item.image_url}
+              alt={item.name}
+              fallbackText={item.name}
+              fit="contain"
+              imgPadding="p-1"
+              sizes="48px"
+              className="h-12 w-12 shrink-0 rounded-xl"
+            />
             <div className="flex-1">
               <p className="font-semibold">{item.name}</p>
               <p className="text-xs text-muted">{item.market}</p>

@@ -5,6 +5,7 @@ const STALE_DAYS = 30;
 export type Row = {
   market_id: number;
   market_name: string;
+  market_image_url?: string | null;
   product_id: number;
   product_name: string;
   quantity: number;
@@ -35,6 +36,7 @@ export function buildComparison(
   const markets = new Map<number, {
     market_id: number;
     market_name: string;
+    market_image_url: string | null;
     totalCents: number;
     missing_count: number;
     has_stale_prices: boolean;
@@ -61,6 +63,7 @@ export function buildComparison(
       m = {
         market_id: r.market_id,
         market_name: r.market_name,
+        market_image_url: r.market_image_url ?? null,
         totalCents: 0,
         missing_count: 0,
         has_stale_prices: false,
@@ -107,6 +110,7 @@ export function buildComparison(
     .map((m) => ({
       market_id: m.market_id,
       market_name: m.market_name,
+      market_image_url: m.market_image_url,
       total: money(m.totalCents),
       totalCents: m.totalCents,
       complete: m.missing_count === 0,
@@ -177,7 +181,7 @@ export async function compareList(userId: number, listId: number, marketIds?: nu
   if (countResult.rows[0].n === 0) return { kind: 'empty' as const };
 
   const result = await pool.query(
-    `SELECT m.id AS market_id, m.name AS market_name,
+    `SELECT m.id AS market_id, m.name AS market_name, m.image_url AS market_image_url,
             i.product_id, p.name AS product_name, i.quantity,
             lp.price, lp.is_available, lp.is_promotion, lp.recorded_at
      FROM shopping_list_items i
@@ -207,7 +211,7 @@ export async function compareBasket(
   marketIds?: number[]
 ) {
   const result = await pool.query(
-    `SELECT m.id AS market_id, m.name AS market_name,
+    `SELECT m.id AS market_id, m.name AS market_name, m.image_url AS market_image_url,
             b.product_id, p.name AS product_name, b.quantity,
             lp.price, lp.is_available, lp.is_promotion, lp.recorded_at
      FROM unnest($1::bigint[], $2::int[]) AS b(product_id, quantity)
